@@ -1,0 +1,94 @@
+<body class="cursor-overlay-body">
+  <div id="baeffect-cursor-layer" class="cursor-layer cursor-normal"></div>
+</body>
+
+<style>
+  body.cursor-overlay-body {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    pointer-events: none;
+    overflow: hidden;
+    transform: translateZ(30000px);
+  }
+
+  #baeffect-cursor-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    pointer-events: auto;
+    cursor: url("/baeffect/normal.cur");
+  }
+
+  #baeffect-cursor-layer.cursor-normal {
+    cursor: url("/baeffect/normal.cur");
+  }
+
+  #baeffect-cursor-layer.cursor-help {
+    cursor: url("/baeffect/help.cur");
+  }
+
+  #baeffect-cursor-layer.cursor-loading {
+    cursor: url("/baeffect/loading.ani");
+  }
+
+  #baeffect-cursor-layer.cursor-background {
+    cursor: url("/baeffect/background.ani");
+  }
+
+  #baeffect-cursor-layer.cursor-link {
+    cursor: url("/baeffect/link.cur");
+  }
+
+  #baeffect-cursor-layer.cursor-move {
+    cursor: url("/baeffect/move.cur");
+  }
+
+  #baeffect-cursor-layer.cursor-text {
+    cursor: url("/baeffect/text.ani");
+  }
+
+  #baeffect-cursor-layer.cursor-pen {
+    cursor: url("/baeffect/pen.cur");
+  }
+
+  #baeffect-cursor-layer.cursor-block {
+    cursor: url("/baeffect/block.cur");
+  }
+
+  #baeffect-cursor-layer.cursor-area-select {
+    cursor: url("/baeffect/areaselect.cur");
+  }
+
+  #baeffect-cursor-layer.cursor-alternate-select {
+    cursor: url("/baeffect/alternativeselect.cur");
+  }
+
+  #baeffect-cursor-layer.cursor-resize-ns {
+    cursor: url("/baeffect/resizeNS.cur");
+  }
+
+  #baeffect-cursor-layer.cursor-resize-we {
+    cursor: url("/baeffect/resizeWE.cur");
+  }
+
+  #baeffect-cursor-layer.cursor-resize-diag1 {
+    cursor: url("/baeffect/resizeDIAG1.cur");
+  }
+
+  #baeffect-cursor-layer.cursor-resize-diag2 {
+    cursor: url("/baeffect/resizeDIAG2.cur");
+  }
+
+  #baeffect-cursor-layer.cursor-hidden {
+    cursor: none;
+  }
+</style>

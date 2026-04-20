@@ -1,0 +1,84 @@
+package com.sighs.baeffect;
+
+import com.sighs.apricityui.instance.Client;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ScreenEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+
+@Mod.EventBusSubscriber(modid = Baeffect.MODID, value = Dist.CLIENT)
+public final class BAEffectCursorDispatcher {
+    private BAEffectCursorDispatcher() {
+    }
+
+    @SubscribeEvent
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+        syncCursor();
+    }
+
+    @SubscribeEvent
+    public static void onScreenRender(ScreenEvent.Render.Post event) {
+        syncCursor();
+    }
+
+    private static void syncCursor() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft == null || minecraft.mouseHandler == null) return;
+
+        Screen screen = minecraft.screen;
+        if (screen == null) {
+            BAEffectCursorController.hide();
+            if (minecraft.level != null && !minecraft.mouseHandler.isMouseGrabbed()) {
+                minecraft.mouseHandler.grabMouse();
+            }
+            return;
+        }
+
+        BAEffectCursorController.ensure();
+        BAEffectCursorController.setCursorStyle(resolveCursorStyle(screen));
+    }
+
+    private static BAEffectCursorController.CursorStyle resolveCursorStyle(Screen screen) {
+        GuiEventListener hovered = findHovered(screen);
+        if (hovered instanceof EditBox) {
+            return BAEffectCursorController.CursorStyle.TEXT;
+        }
+        if (hovered instanceof AbstractButton button) {
+            return button.active
+                    ? BAEffectCursorController.CursorStyle.LINK
+                    : BAEffectCursorController.CursorStyle.BLOCK;
+        }
+        if (hovered instanceof AbstractWidget widget && !widget.active) {
+            return BAEffectCursorController.CursorStyle.BLOCK;
+        }
+
+        GuiEventListener focused = screen.getFocused();
+        if (focused instanceof EditBox) {
+            return BAEffectCursorController.CursorStyle.TEXT;
+        }
+        if (focused instanceof AbstractButton button) {
+            return button.active
+                    ? BAEffectCursorController.CursorStyle.ALTERNATE_SELECT
+                    : BAEffectCursorController.CursorStyle.BLOCK;
+        }
+        if (focused instanceof AbstractWidget widget && !widget.active) {
+            return BAEffectCursorController.CursorStyle.BLOCK;
+        }
+
+        return BAEffectCursorController.CursorStyle.NORMAL;
+    }
+
+    private static GuiEventListener findHovered(Screen screen) {
+        var mouse = Client.getMousePositionDirectly();
+        if (mouse == null) return null;
+        return screen.getChildAt(mouse.x, mouse.y).orElse(null);
+    }
+}
