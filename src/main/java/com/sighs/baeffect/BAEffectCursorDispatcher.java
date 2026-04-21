@@ -8,6 +8,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderTooltipEvent;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -15,6 +16,8 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = Baeffect.MODID, value = Dist.CLIENT)
 public final class BAEffectCursorDispatcher {
+    private static boolean itemTooltipVisibleThisFrame = false;
+
     private BAEffectCursorDispatcher() {
     }
 
@@ -29,9 +32,18 @@ public final class BAEffectCursorDispatcher {
         syncCursor();
     }
 
+    @SubscribeEvent
+    public static void onScreenRenderPre(ScreenEvent.Render.Pre event) {
+        itemTooltipVisibleThisFrame = false;
+    }
+
+    @SubscribeEvent
+    public static void onTooltipRender(RenderTooltipEvent.Pre event) {
+        itemTooltipVisibleThisFrame = !event.getItemStack().isEmpty();
+    }
+
     private static void syncCursor() {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft == null || minecraft.mouseHandler == null) return;
 
         Screen screen = minecraft.screen;
         if (screen == null) {
@@ -47,6 +59,15 @@ public final class BAEffectCursorDispatcher {
     }
 
     private static BAEffectCursorController.CursorStyle resolveCursorStyle(Screen screen) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player != null && !minecraft.player.containerMenu.getCarried().isEmpty()) {
+            return BAEffectCursorController.CursorStyle.MOVE;
+        }
+
+        if (itemTooltipVisibleThisFrame) {
+            return BAEffectCursorController.CursorStyle.LINK;
+        }
+
         GuiEventListener hovered = findHovered(screen);
         if (hovered instanceof EditBox) {
             return BAEffectCursorController.CursorStyle.TEXT;
