@@ -114,7 +114,7 @@ dependencies {
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
-    implementation 'com.sighs:ApricityUI-neoforge-26.1.1:1.1.0.1'
+    implementation 'com.sighs:ApricityUI-neoforge-26.1.1:1.1.0.3'
 
 }
 

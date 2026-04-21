@@ -21,15 +21,15 @@ public final class BAEffectCursorDispatcher {
     private BAEffectCursorDispatcher() {
     }
 
-//    @SubscribeEvent
-//    public static void onClientTick(ClientTickEvent.Pre event) {
-//        syncCursor();
-//    }
-//
-//    @SubscribeEvent
-//    public static void onScreenRender(ScreenEvent.Render.Post event) {
-//        syncCursor();
-//    }
+    @SubscribeEvent
+    public static void onClientTick(ClientTickEvent.Pre event) {
+        syncCursor();
+    }
+
+    @SubscribeEvent
+    public static void onScreenRender(ScreenEvent.Render.Post event) {
+        syncCursor();
+    }
 
     @SubscribeEvent
     public static void onScreenRenderPre(ScreenEvent.Render.Pre event) {
