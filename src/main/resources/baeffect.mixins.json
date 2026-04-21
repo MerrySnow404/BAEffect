@@ -2,8 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.sighs.baeffect.mixin",
-  "compatibilityLevel": "JAVA_8",
-  "refmap": "baeffect.refmap.json",
+  "compatibilityLevel": "JAVA_25",
   "mixins": [
   ],
   "client": [

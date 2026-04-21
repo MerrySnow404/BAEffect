@@ -7,30 +7,29 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderTooltipEvent;
-import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RenderTooltipEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
 
-@Mod.EventBusSubscriber(modid = Baeffect.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Baeffect.MODID, value = Dist.CLIENT)
 public final class BAEffectCursorDispatcher {
     private static boolean itemTooltipVisibleThisFrame = false;
 
     private BAEffectCursorDispatcher() {
     }
 
-    @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-        syncCursor();
-    }
-
-    @SubscribeEvent
-    public static void onScreenRender(ScreenEvent.Render.Post event) {
-        syncCursor();
-    }
+//    @SubscribeEvent
+//    public static void onClientTick(ClientTickEvent.Pre event) {
+//        syncCursor();
+//    }
+//
+//    @SubscribeEvent
+//    public static void onScreenRender(ScreenEvent.Render.Post event) {
+//        syncCursor();
+//    }
 
     @SubscribeEvent
     public static void onScreenRenderPre(ScreenEvent.Render.Pre event) {

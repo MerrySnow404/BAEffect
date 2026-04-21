@@ -1,6 +1,6 @@
 package com.sighs.baeffect;
 
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.fml.common.Mod;
 
 @Mod(Baeffect.MODID)
 public class Baeffect {

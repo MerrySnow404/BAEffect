@@ -9,12 +9,12 @@ import com.sighs.apricityui.resource.HTML;
 import com.sighs.apricityui.style.Position;
 import com.sighs.apricityui.style.Size;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 
-@Mod.EventBusSubscriber(modid = Baeffect.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Baeffect.MODID, value = Dist.CLIENT)
 public class BASparkOverlay {
     private static final String DOC_PATH = "__runtime/baspark-canvas-overlay__.html";
     private static final String CANVAS_ID = "baspark-canvas";
@@ -77,9 +77,7 @@ public class BASparkOverlay {
     }
 
     @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.START) return;
-
+    public static void onClientTick(ClientTickEvent.Pre event) {
         Document document = ensureOverlayLoaded();
         Canvas canvas = resolveCanvas(document);
         if (canvas == null) return;
