@@ -9,6 +9,7 @@ import com.sighs.apricityui.init.Element;
 import com.sighs.apricityui.layout.Position;
 import com.sighs.apricityui.parser.HTML;
 import net.minecraft.client.Minecraft;
+import org.lwjgl.glfw.GLFW;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.event.TickEvent;
 
@@ -32,7 +33,7 @@ final class BAClickFxOverlay {
 
     private static final double TAU = Math.PI * 2.0D;
     private static final double MAX_FRAME_MS = 100.0D;
-    private static final int MAX_TRAIL_POINTS = 64;
+    private static final int MAX_TRAIL_POINTS = 256;
     private static final int[] WHITE = {255, 255, 255};
     private static final StringBuilder RGBA = new StringBuilder(48);
 
@@ -81,16 +82,38 @@ final class BAClickFxOverlay {
     private BAClickFxOverlay() {
     }
 
+    /** Reads the current GUI position and converts it into the overlay document's CSS space. */
+    private static Position mousePosition(Document document) {
+        Minecraft minecraft = Minecraft.getInstance();
+        var window = minecraft.getWindow();
+        long handle = window.getWindow();
+        if (handle == 0L || document == null) return null;
+
+        double[] cursorX = {0.0D};
+        double[] cursorY = {0.0D};
+        GLFW.glfwGetCursorPos(handle, cursorX, cursorY);
+        int screenWidth = window.getScreenWidth();
+        int screenHeight = window.getScreenHeight();
+        int guiWidth = window.getGuiScaledWidth();
+        int guiHeight = window.getGuiScaledHeight();
+        if (screenWidth <= 0 || screenHeight <= 0 || guiWidth <= 0 || guiHeight <= 0) return null;
+
+        Position guiPosition = new Position(
+                cursorX[0] * guiWidth / screenWidth,
+                cursorY[0] * guiHeight / screenHeight);
+        return document.guiToDocumentPosition(guiPosition);
+    }
+
     static void handleMouseButton(InputEvent.MouseButton.Pre event) {
         if (event.getButton() != 0) return;
         if (Minecraft.getInstance().screen == null) return;
         if (!Baeffect.flag("enabled")) return;
 
-        Position position = Client.getMousePositionDirectly();
+        Position position = mousePosition(ensureOverlayLoaded());
         if (event.getAction() == InputConstants.PRESS) {
             mouseDown = true;
             hasTrailAnchor = false;
-            if (position != null) {
+            if (position != null && Baeffect.flag("clickEnabled")) {
                 if (PhiraHitFx.isActive()) {
                     PhiraHitFx.spawn(position.x, position.y, Baeffect.referenceUnit());
                 } else {
@@ -168,9 +191,8 @@ final class BAClickFxOverlay {
         DISKS.add(new Disk(x, y));
 
         int ringCount = (int) Math.round(Math.max(0.0D, Baeffect.num("rings.count")));
-        double ringScale = ringScale();
         for (int index = 0; index < ringCount; index++) {
-            RINGS.add(new Ring(x, y, index, ringCount, ringScale));
+            RINGS.add(new Ring(x, y, index, ringCount, unit));
         }
 
         spawnShards(x, y, unit);
@@ -282,8 +304,9 @@ final class BAClickFxOverlay {
         }
         missingBodyTicks = 0;
 
-        int logicalWidth = Math.max(1, Minecraft.getInstance().getWindow().getGuiScaledWidth());
-        int logicalHeight = Math.max(1, Minecraft.getInstance().getWindow().getGuiScaledHeight());
+        var viewportSize = document.getViewportSize();
+        int logicalWidth = Math.max(1, (int) Math.round(viewportSize.width()));
+        int logicalHeight = Math.max(1, (int) Math.round(viewportSize.height()));
 
         double guiScale = Math.max(0.5D, Minecraft.getInstance().getWindow().getGuiScale());
         double renderScale = Math.max(0.5D, Math.min(guiScale, Math.max(1.0D, Baeffect.num("maxDpr"))));
@@ -327,6 +350,10 @@ final class BAClickFxOverlay {
         if (context != null) {
             context.setTransform(renderScale, 0, 0, renderScale, 0, 0);
         }
+
+        // 画布尺寸更新后同步该文档的 viewport，避免窗口最大化后鼠标映射仍使用旧尺寸。
+        document.applyViewport(true);
+        com.sighs.apricityui.init.Window.window.fireResizeEvent();
     }
 
     private static void updateState(double deltaMs) {
@@ -420,34 +447,51 @@ final class BAClickFxOverlay {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.screen == null) return;
 
-        Position position = Client.getMousePositionDirectly();
+        Position position = mousePosition(ensureOverlayLoaded());
         if (position == null) return;
 
         if (!hasTrailAnchor) {
             trailAnchorX = position.x;
             trailAnchorY = position.y;
             hasTrailAnchor = true;
+            if (always) {
+                TrailPoint point = new TrailPoint();
+                point.x = position.x - 0.5D;
+                point.y = position.y;
+                point.ageMs = 0.0D;
+                TRAIL.add(point);
+            }
             return;
         }
 
-        double distance = Math.hypot(position.x - trailAnchorX, position.y - trailAnchorY);
+        double deltaX = position.x - trailAnchorX;
+        double deltaY = position.y - trailAnchorY;
+        double distance = Math.hypot(deltaX, deltaY);
         double minStep = Math.max(0.5D, Baeffect.num("trail.minVertexDistance") * unit);
         if (distance < minStep) return;
 
-        TrailPoint point = new TrailPoint();
-        point.x = position.x;
-        point.y = position.y;
-        point.ageMs = 0.0D;
-        TRAIL.add(point);
-        while (TRAIL.size() > MAX_TRAIL_POINTS) {
-            TRAIL.remove(0);
-        }
-
+        int steps = Math.max(1, Math.min(512, (int) Math.ceil(distance / minStep)));
         double spacing = Math.max(1.0D, Baeffect.num("shards.trailSpacing") * unit);
-        trailSpacingAccumulator += distance;
-        while (trailSpacingAccumulator >= spacing) {
-            trailSpacingAccumulator -= spacing;
-            spawnTrailShard(position.x, position.y, unit);
+        double stepDistance = distance / steps;
+        for (int step = 1; step <= steps; step++) {
+            double fraction = (double) step / steps;
+            double sampleX = trailAnchorX + deltaX * fraction;
+            double sampleY = trailAnchorY + deltaY * fraction;
+
+            TrailPoint point = new TrailPoint();
+            point.x = sampleX;
+            point.y = sampleY;
+            point.ageMs = 0.0D;
+            TRAIL.add(point);
+            while (TRAIL.size() > MAX_TRAIL_POINTS) {
+                TRAIL.remove(0);
+            }
+
+            trailSpacingAccumulator += stepDistance;
+            while (trailSpacingAccumulator >= spacing) {
+                trailSpacingAccumulator -= spacing;
+                spawnTrailShard(sampleX, sampleY, unit);
+            }
         }
 
         trailAnchorX = position.x;
@@ -806,6 +850,8 @@ final class BAClickFxOverlay {
                 context.moveTo(previous.x, previous.y);
                 context.lineTo(current.x, current.y);
                 context.setLineWidth(glowWidth);
+                context.setLineCap("round");
+                context.setLineJoin("round");
                 context.setStrokeStyle(rgba(themeColor(), alpha * 0.25D * bloomGain()));
                 context.stroke();
             }
@@ -820,6 +866,8 @@ final class BAClickFxOverlay {
             context.moveTo(previous.x, previous.y);
             context.lineTo(current.x, current.y);
             context.setLineWidth(width);
+            context.setLineCap("round");
+            context.setLineJoin("round");
             context.setStrokeStyle(rgba(themeColor(), alpha));
             context.stroke();
         }

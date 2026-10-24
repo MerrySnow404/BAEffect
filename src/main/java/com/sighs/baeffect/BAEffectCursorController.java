@@ -36,8 +36,8 @@ public class BAEffectCursorController {
 
     public static void hide() {
         clearApricityPseudoCursor();
-        ArrayList<Document> docs = Document.get(DOCUMENT_PATH);
-        for (Document document : docs) {
+        List<Document> docs = Baeffect.documents(DOCUMENT_PATH);
+        for (Document document : new ArrayList<>(docs)) {
             if (document != null) {
                 applyCursorStyle(document, CursorStyle.HIDDEN);
                 document.setReloadPersistent(false);
@@ -134,7 +134,7 @@ public class BAEffectCursorController {
     }
 
     private static Document getDocument() {
-        ArrayList<Document> docs = Document.get(DOCUMENT_PATH);
+        List<Document> docs = Baeffect.documents(DOCUMENT_PATH);
         if (docs.isEmpty()) return null;
         return docs.get(docs.size() - 1);
     }
