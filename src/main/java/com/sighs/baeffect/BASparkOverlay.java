@@ -608,9 +608,33 @@ final class BAClickFxOverlay {
             double circumference = TAU * radius;
             int samples = (int) Math.max(32.0D, Math.max(Math.ceil(circumference), arcSamples));
 
+            double ringGlowAlpha = alpha * 0.18D * bloomGain()
+                    * Math.max(0.0D, Baeffect.num("bloom.ringAlpha")) * 2.6D;
+
             context.save();
             context.translate(ring.x, ring.y);
             context.rotate(ring.angle);
+
+            if (bloom && ringGlowAlpha > 0.004D) {
+                context.beginPath();
+                context.arc(0.0D, 0.0D, radius, 0.0D, TAU, false);
+                context.setLineWidth(Math.max(1.0D, width) * 4.2D);
+                context.setStrokeStyle(rgba(themeColor(), ringGlowAlpha * 0.22D));
+                context.stroke();
+
+                context.beginPath();
+                context.arc(0.0D, 0.0D, radius, 0.0D, TAU, false);
+                context.setLineWidth(Math.max(1.0D, width) * 2.6D);
+                context.setStrokeStyle(rgba(themeColor(), ringGlowAlpha * 0.45D));
+                context.stroke();
+
+                context.beginPath();
+                context.arc(0.0D, 0.0D, radius, 0.0D, TAU, false);
+                context.setLineWidth(Math.max(1.0D, width) * 1.6D);
+                context.setStrokeStyle(rgba(themeColor(), ringGlowAlpha));
+                context.stroke();
+            }
+
             for (int index = 0; index < samples; index++) {
                 double start = (double) index / samples;
                 double end = (double) (index + 1) / samples;
@@ -623,21 +647,11 @@ final class BAClickFxOverlay {
                 context.setLineWidth(Math.max(0.5D, width));
                 context.setStrokeStyle(rgba(themeColor(), alpha));
                 context.stroke();
-
-                if (bloom) {
-                    context.beginPath();
-                    context.arc(0.0D, 0.0D, radius, start * TAU, end * TAU, false);
-                    context.setLineWidth(Math.max(0.5D, width) * 2.6D);
-                    context.setStrokeStyle(rgba(themeColor(),
-                            alpha * 0.18D * bloomGain() * Baeffect.num("bloom.ringAlpha") * 2.6D));
-                    context.stroke();
-                }
             }
             context.restore();
         }
     }
 
-    /** 平滑插值关键帧（上游 Jo）：每行 [t, value]。 */
     private static double smooth(double[][] keys, double t) {
         if (keys == null || keys.length == 0) return 0.0D;
         double clamped = clamp01(t);
@@ -654,7 +668,6 @@ final class BAClickFxOverlay {
         return keys[keys.length - 1][1];
     }
 
-    /** Hermite 关键帧插值：每行 [t, value, inTangent?, outTangent?]，与上游 Z() 一致。 */
     private static double hermite(double[][] keys, double t) {
         if (keys == null || keys.length == 0) return 0.0D;
         double clamped = clamp01(t);
@@ -832,28 +845,22 @@ final class BAClickFxOverlay {
         if (TRAIL.size() < 2) return;
 
         double lifetime = Math.max(50.0D, Baeffect.num("trail.lifetimeMs"));
-        double opacity = Baeffect.num("trail.trailOpacity");
-        boolean bloom = Baeffect.flag("bloom");
+        double opacity = Math.max(0.05D, Baeffect.num("trail.trailOpacity"));
         double scale = ringScale();
-        double width = Math.max(1.0D, Baeffect.num("trail.geometryWidth") * scale);
-        double glowWidth = Math.max(2.0D, Baeffect.num("trail.outerGlowWidth") * scale);
-        double emission = Math.max(0.0D, Baeffect.num("bloom.trailAlpha")) * 4.0D;
+        double width = Math.max(1.5D, Baeffect.num("trail.width") * scale);
+        double glowWidth = Math.max(3.0D, Baeffect.num("trailGlowWidth") * scale);
+        double glowOpacity = Math.max(0.0D, Math.min(1.0D, Baeffect.num("trailGlowOpacity")));
+        double emission = Math.max(0.0D, Math.min(1.0D, Baeffect.num("bloom.trailAlpha")));
+        String glowMode = Baeffect.text("trailGlowMode");
 
+        double glowStrength = glowOpacity * (0.35D + emission * 1.3D);
+        boolean glowOn = !"off".equals(glowMode) && glowStrength > 0.004D;
 
-        if (bloom && emission > 0.01D) {
-            for (int index = 1; index < TRAIL.size(); index++) {
-                TrailPoint previous = TRAIL.get(index - 1);
-                TrailPoint current = TRAIL.get(index);
-                double alpha = segmentAlpha(previous, current, lifetime) * opacity * emission;
-                if (alpha <= 0.004D) continue;
-                context.beginPath();
-                context.moveTo(previous.x, previous.y);
-                context.lineTo(current.x, current.y);
-                context.setLineWidth(glowWidth);
-                context.setLineCap("round");
-                context.setLineJoin("round");
-                context.setStrokeStyle(rgba(themeColor(), alpha * 0.25D * bloomGain()));
-                context.stroke();
+        if (glowOn) {
+            if ("fine".equals(glowMode)) {
+                renderTrailGlowFine(context, lifetime, opacity, width, glowWidth, glowStrength);
+            } else {
+                renderTrailGlowMedium(context, lifetime, opacity, width, glowWidth, glowStrength);
             }
         }
 
@@ -873,7 +880,72 @@ final class BAClickFxOverlay {
         }
     }
 
-    /** 上游轨迹按顶点年龄淡出：两端年龄取平均。 */
+    private static void renderTrailGlowMedium(CanvasRenderingContext2D context, double lifetime,
+                                              double opacity, double width, double glowWidth, double strength) {
+        double[] spread = {1.0D, 0.62D, 0.32D};
+        double[] weight = {1.0D, 1.45D, 2.0D};
+        for (int layer = 0; layer < spread.length; layer++) {
+            double gain = Math.min(1.0D, strength * weight[layer] * 0.55D);
+            if (gain <= 0.004D) continue;
+            for (int index = 1; index < TRAIL.size(); index++) {
+                TrailPoint previous = TRAIL.get(index - 1);
+                TrailPoint current = TRAIL.get(index);
+                double alpha = segmentAlpha(previous, current, lifetime) * opacity * gain;
+                if (alpha <= 0.004D) continue;
+                context.beginPath();
+                context.moveTo(previous.x, previous.y);
+                context.lineTo(current.x, current.y);
+                context.setLineWidth(Math.max(width, glowWidth * spread[layer]));
+                context.setLineCap("round");
+                context.setLineJoin("round");
+                context.setStrokeStyle(rgba(themeColor(), alpha));
+                context.stroke();
+            }
+        }
+    }
+
+    private static void renderTrailGlowFine(CanvasRenderingContext2D context, double lifetime,
+                                            double opacity, double width, double glowWidth, double strength) {
+        double[] spread = {1.0D, 0.88D, 0.77D, 0.66D, 0.56D, 0.47D, 0.39D, 0.32D, 0.25D, 0.18D};
+        for (int layer = spread.length - 1; layer >= 0; layer--) {
+            double falloff = 1.0D - (double) layer / spread.length;
+            double gaussian = Math.exp(-3.2D * (1.0D - falloff) * (1.0D - falloff));
+            double gain = Math.min(1.0D, strength * (0.22D + gaussian * 1.35D));
+            if (gain <= 0.002D) continue;
+            double layerWidth = Math.max(width, glowWidth * spread[layer]);
+            for (int index = 1; index < TRAIL.size(); index++) {
+                TrailPoint previous = TRAIL.get(index - 1);
+                TrailPoint current = TRAIL.get(index);
+                double alpha = segmentAlpha(previous, current, lifetime) * opacity * gain;
+                if (alpha <= 0.002D) continue;
+                context.beginPath();
+                context.moveTo(previous.x, previous.y);
+                context.lineTo(current.x, current.y);
+                context.setLineWidth(layerWidth);
+                context.setLineCap("round");
+                context.setLineJoin("round");
+                context.setStrokeStyle(rgba(themeColor(), alpha));
+                context.stroke();
+            }
+        }
+
+        double coreGain = Math.min(1.0D, strength * 1.9D);
+        for (int index = 1; index < TRAIL.size(); index++) {
+            TrailPoint previous = TRAIL.get(index - 1);
+            TrailPoint current = TRAIL.get(index);
+            double alpha = segmentAlpha(previous, current, lifetime) * opacity * coreGain;
+            if (alpha <= 0.002D) continue;
+            context.beginPath();
+            context.moveTo(previous.x, previous.y);
+            context.lineTo(current.x, current.y);
+            context.setLineWidth(Math.max(0.8D, width * 0.55D));
+            context.setLineCap("round");
+            context.setLineJoin("round");
+            context.setStrokeStyle(rgba(WHITE, alpha * 0.55D));
+            context.stroke();
+        }
+    }
+
     private static double segmentAlpha(TrailPoint previous, TrailPoint current, double lifetime) {
         double previousFade = clamp01(1.0D - previous.ageMs / lifetime);
         double currentFade = clamp01(1.0D - current.ageMs / lifetime);
@@ -980,7 +1052,7 @@ final class BAClickFxOverlay {
             angle += angularVelocity * (deltaMs / 1000.0D);
         }
 
-        /** 上游 tc()：速度 = lerp(minKeys, maxKeys, blend) × multiplier × direction。 */
+        //上游 tc()：速度 = lerp(minKeys, maxKeys, blend) × multiplier × direction。
         private static double angularVelocity(double blend, double progress) {
             double min = smooth(RING_ANGULAR_MIN_KEYS, progress);
             double max = smooth(RING_ANGULAR_MAX_KEYS, progress);

@@ -40,6 +40,7 @@ public final class Baeffect {
     private static final List<String> PRESETS = List.of("classic", "light-background", "soft", "performance", "custom");
     private static final List<String> COMPOSITING = List.of("add", "normal");
     private static final List<String> MOTION = List.of("system", "full", "reduced");
+    private static final List<String> TRAIL_GLOW = List.of("off", "medium", "fine");
     private static final Map<String, Object> DEFAULTS = createDefaults();
     private static final Map<String, Object> VALUES = new LinkedHashMap<>(DEFAULTS);
 
@@ -265,6 +266,8 @@ public final class Baeffect {
         clamp01("bloom.ringAlpha");
         clamp01("bloom.diskAlpha");
         clamp01("bloom.trailAlpha");
+        clamp01("trailGlowOpacity");
+        clamp("trailGlowWidth", 1.0D, 60.0D);
         clamp01("overlayAlphaLimit");
 
         clamp("scale", 0.01D, 5.0D);
@@ -296,6 +299,7 @@ public final class Baeffect {
         if (!PRESETS.contains(text("preset"))) VALUES.put("preset", "custom");
         if (!COMPOSITING.contains(text("compositing"))) VALUES.put("compositing", "add");
         if (!MOTION.contains(text("motionMode"))) VALUES.put("motionMode", "system");
+        if (!TRAIL_GLOW.contains(text("trailGlowMode"))) VALUES.put("trailGlowMode", "medium");
         if (!text("color").matches("^#[0-9a-fA-F]{6}$")) VALUES.put("color", "#4ca7ff");
     }
 
@@ -394,6 +398,9 @@ public final class Baeffect {
 
         // 轨迹
         defaults.put("trail.lifetimeMs", 300.0D);
+        defaults.put("trailGlowMode", "medium");
+        defaults.put("trailGlowOpacity", 0.04D);
+        defaults.put("trailGlowWidth", 22.5D);
         defaults.put("trail.width", 2.7D);
         defaults.put("trail.geometryWidth", 2.7D);
         defaults.put("trail.minVertexDistance", 5.4D);
