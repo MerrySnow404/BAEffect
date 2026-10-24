@@ -1,0 +1,219 @@
+﻿# Firefox Add-ons Submission
+
+## Package and release references
+
+- Extension and core versions: `extensionVersion`, `corePackage`, and `coreVersion` in [metadata.json](./metadata.json)
+- Manifest version: `3`
+- Gecko ID: `ba-click-fx-extension@cialloking.top`
+- Minimum Firefox Desktop version: `140.0`
+- Minimum Firefox for Android version declared for manifest validation: `142.0`
+- Submission platform: Firefox Desktop only
+- GitHub packages: [Releases](https://github.com/CialloKing/ba-click-fx-extension/releases); choose the release matching the metadata
+- AMO status and public install URL: record the actual dashboard result after submission; GitHub publication alone does not establish AMO availability
+- Intended distribution: `On this site` / listed on AMO
+- Remote code: `No`
+- Data collection or transmission: `None`
+- Firefox package and SHA-256: `firefoxPackage` and `firefoxSha256` in [metadata.json](./metadata.json)
+- Firefox source package and SHA-256: `firefoxSourcePackage` and `firefoxSourceSha256` in [metadata.json](./metadata.json)
+- No test account, credentials, payment, hardware, or external service required
+
+Do not upload the Chromium ZIP to AMO. The Firefox ZIP removes `minimum_chrome_version`, adds the stable Gecko identity, and declares the current built-in data collection permission.
+
+## Listing configuration
+
+- Name: `BA Click FX`
+- Suggested AMO URL slug: `ba-click-fx`
+- Category: `Appearance`
+- Experimental: `No`
+- Requires payment, non-free services, additional software, or hardware: `No`
+- License: `MIT License`
+- Homepage: https://ba-click-fx.cialloking.top/
+- Support website: https://github.com/CialloKing/ba-click-fx-extension/issues
+- Source code: https://github.com/CialloKing/ba-click-fx-extension
+- Privacy policy: https://github.com/CialloKing/ba-click-fx-extension/blob/main/PRIVACY.md
+
+Use the Mozilla Account address as the support email if AMO requires a private contact address. Do not place a private email address in repository files.
+
+## English summary
+
+```text
+Add configurable click rings, particles, and cursor trails to ordinary webpages.
+```
+
+## English description
+
+```text
+BA Click FX is an unofficial, fan-made visual-effects extension for ordinary webpages.
+
+It adds game-inspired click rings, particle fragments, and a theme-colored cursor light trail. Effects are rendered locally with Canvas 2D, WebGL2, or WebGPU. Quick controls are available in the toolbar popup, while full settings also manages experimental WebGPU HDR, Full WebGL2 and explicit compatibility render modes, maximum DPR, compositing, timing, and all 66 public upstream effect parameters.
+
+Features:
+• Enable or disable click effects and cursor trails independently
+• Enable or disable the extension for the current website
+• Choose Close to original, Light background, Soft, or Power-saving effect presets
+• Apply appearance, render mode, DPR, and compositing together through one preset; precise render controls remain available in Full settings
+• Explicitly select experimental WebGPU HDR in Full settings; real HDR requires an Extended output, while Standard output remains SDR
+• Adjust theme color, opacity, effect size, six HDR presentation controls, Full WebGL2 or explicit compatibility render modes, maximum DPR, output compositing, light-background contrast, timing, and all 66 public effect parameters
+• Automatically use the browser language or choose Simplified Chinese or English
+• Follow the system reduced-motion preference or choose full/reduced continuous motion
+• Search, remove, or clear locally saved website rules
+• Release rendering resources while a tab is in the background
+• Work offline with no developer server or remotely hosted code
+
+How to use:
+1. Install the extension and open or refresh an ordinary HTTP/HTTPS webpage.
+2. Click the webpage to display rings and particle fragments.
+3. Hold a mouse button and move to display the cursor trail, or enable “Always show while moving” in the popup.
+4. Open the toolbar popup for quick controls, or select Full settings for all preferences and website rules.
+
+Privacy and local processing:
+• Pointer coordinates and click/move events are processed temporarily in memory only to draw visible effects
+• The current website origin is processed locally for the per-site switch
+• Website origins explicitly disabled by the user are saved in local extension storage
+• Visual, interface, and motion preferences use browser-provided sync storage
+• The developer does not receive browsing activity, pointer data, or saved preferences
+• No ads, analytics, telemetry, profiling, page-content collection, or network requests
+
+Known limitations:
+• Browser internal pages, add-on stores, and some built-in viewers do not allow content scripts
+• Effects are intentionally limited to top-level documents, so events inside some iframes are not displayed
+• Local file pages require the user to grant local-file access in the add-on settings
+
+BA Click FX is not affiliated with or endorsed by Nexon, NEXON Games, Yostar, or the Blue Archive project. No official game logos, characters, screenshots, or assets are included.
+```
+
+## 简体中文摘要
+
+```text
+为普通网页添加可配置的点击圆环、粒子碎片和鼠标光标拖尾。
+```
+
+## 简体中文说明
+
+```text
+BA Click FX 是一个非官方的网页视觉特效扩展。
+
+安装后，普通网页会显示游戏风格的鼠标点击圆环、粒子碎片和主题色光标拖尾。所有特效均使用 Canvas 2D、WebGL2 或 WebGPU 在本地渲染。工具栏弹窗提供常用开关，完整设置页还可管理实验性 WebGPU HDR、完整 WebGL2 与显式兼容渲染模式、最大 DPR、输出合成、浅色背景对比、时间倍率，以及上游参数 Schema 中全部 66 个公开特效参数。
+
+主要功能：
+• 点击特效与光标拖尾可分别开关
+• 可为当前网站单独启用或禁用
+• 可选择贴近原版、浅色背景优化、柔和或省电效果预设
+• 一个预设统一应用外观、渲染模式、DPR 与合成方式；完整设置仍可精确调整渲染参数
+• 可在完整设置中显式选择实验性 WebGPU HDR；只有 Extended 输出代表真实 HDR，Standard 输出仍是 SDR
+• 可调整主题颜色、不透明度、特效大小、六项 HDR 展示参数、完整 WebGL2 或显式兼容渲染模式、最大 DPR、输出合成、浅色背景对比、时间倍率及全部 66 个公开特效参数
+• 可自动跟随浏览器语言，或指定简体中文/英文
+• 可跟随系统减少动态偏好，或指定完整/减少持续动态
+• 可搜索、移除或清空本机网站规则
+• 标签页进入后台时会释放渲染资源
+• 无需开发者服务器或远程代码，离线也能运行
+
+使用方法：
+1. 安装扩展，然后打开或刷新普通 HTTP/HTTPS 网页。
+2. 点击网页，显示圆环和粒子碎片。
+3. 按住鼠标并移动，显示光标拖尾；也可在弹窗开启“移动时始终显示”。
+4. 打开工具栏弹窗使用常用开关，或进入“完整设置”管理全部偏好和网站规则。
+
+隐私与本地处理：
+• 鼠标坐标和点击/移动事件只在内存中临时处理
+• 当前网站 origin 只在本地用于站点开关
+• 用户主动禁用的网站 origin 保存在本机扩展存储
+• 视觉、界面和动态偏好使用浏览器提供的同步存储
+• 开发者不会收到浏览活动、鼠标数据或保存的设置
+• 不包含广告、分析、遥测、画像、网页内容收集或网络请求
+
+已知限制：
+• 浏览器内部页面、扩展商店和部分内置查看器禁止内容脚本运行
+• 扩展只注入顶层文档，部分 iframe 内的鼠标事件不会显示特效
+• 本地文件页面需要用户在附加组件设置中主动授予访问权限
+
+BA Click FX 是非官方粉丝项目，与 Nexon、NEXON Games、Yostar 或《蔚蓝档案》官方不存在隶属、合作或认可关系。扩展不包含官方游戏 Logo、角色、截图或素材。
+```
+
+## Data collection declaration
+
+Manifest value:
+
+```json
+"data_collection_permissions":
+{
+  "required": ["none"]
+}
+```
+
+Select or confirm **No data collection or transmission** in AMO. Mozilla defines transmission as data handled outside the add-on or local browser. Pointer coordinates, click/move events, settings, and user-disabled origins remain inside the local browser. The extension has no developer-operated server and makes no network requests.
+
+Do not copy Chrome Web Store's conservative `Web history` and `User activity` checkboxes into AMO. Those Chrome disclosures include local processing; AMO's manifest field describes collection or transmission outside the local add-on/browser boundary.
+
+## Permission explanations
+
+`storage`:
+
+```text
+Stores effect, appearance, render mode, DPR, language, and motion preferences using Firefox-provided sync storage. Website origins explicitly disabled by the user are stored in local extension storage. Mozilla may synchronize sync-storage values when Firefox Sync is enabled. The developer has no server and cannot access any stored values.
+```
+
+`activeTab`:
+
+```text
+Used after the user opens the toolbar popup to identify the active website, show its current-site control, and send a user-requested preview message to that tab.
+```
+
+HTTP/HTTPS access:
+
+```text
+The extension's single purpose requires a content script on ordinary webpages so it can receive pointer events and draw a pointer-events:none Canvas overlay. It does not read or transmit page text, forms, cookies, credentials, or account data.
+```
+
+Local file access:
+
+```text
+Allows the same visual effects on local HTML files only after the user grants local-file access in Firefox add-on settings. File contents are not read or transmitted. This permission is not required to verify the primary functionality.
+```
+
+## Notes for Reviewers — submit in English
+
+```text
+BA Click FX adds configurable visual click effects and cursor trails to ordinary webpages.
+
+Testing steps:
+1. Install the extension.
+2. Open https://example.com/ or another ordinary HTTP/HTTPS webpage. If the page was already open before installation, refresh it once.
+3. Click the page to see a ring and particle effect.
+4. Hold a mouse button and move to see the cursor trail; also test the popup's “Always show while moving” option.
+5. Open the toolbar popup. Verify the global, current-website, click-effect, trail, and preview controls.
+6. Select “Full settings”. Change the effect preset, color, opacity, size, render mode, maximum DPR, compositing, or an advanced ring/shard/Bloom/Hit/Flare/trail parameter and verify the webpage updates.
+7. Select “Reduce continuous motion”. Verify click effects remain available while the always-moving trail is suppressed.
+8. Turn off the current website in the popup. Verify the Canvas overlay is removed only for that origin and the origin appears under Disabled websites in Full settings.
+9. Re-enable or remove that website rule and use “Preview click effect”.
+
+No account, login, credentials, payment, hardware, or external service is required.
+
+The extension has no developer-operated server and performs no network requests. All executable code, including ba-click-fx, is bundled in the ZIP. Pointer coordinates are processed transiently in memory only to render visible effects. Visual, interface, and motion preferences use Firefox-provided sync storage. Website origins explicitly disabled by the user use local extension storage. The developer cannot access any of these values.
+
+The submitted source archive contains the exact package lock and SOURCE_BUILD.md. Use Node.js 24, run npm ci, then npm run package:firefox to reproduce the submitted Firefox ZIP.
+
+Expected restrictions:
+- about: pages, addons.mozilla.org, and built-in viewers do not permit content scripts;
+- local file pages require optional local-file access; and
+- the extension intentionally runs only in top-level documents, not inside every iframe.
+
+Testing on file:// pages is optional and is not required to verify the extension's primary functionality.
+```
+
+## Manual submission checklist
+
+1. Complete the [Firefox runtime checklist](./FIREFOX_TEST_CHECKLIST.md) for the target version before creating its tag.
+2. Confirm the GitHub Release contains both Firefox archives and `SHA256SUMS.txt`.
+3. Log in to the [AMO developer dashboard](https://addons.mozilla.org/developers/) with a Mozilla Account.
+4. For an initial listing, choose **Submit a New Add-on** and **On this site**; for an update, open the existing add-on and submit a new version.
+5. Upload the Firefox ZIP identified by `firefoxPackage` in [metadata.json](./metadata.json).
+6. Stop and fix the package if AMO reports an error or a security/privacy warning.
+7. Select Firefox Desktop as the compatible platform.
+8. Answer **Yes** to the source-code question and upload the archive identified by `firefoxSourcePackage` in the same metadata.
+9. Fill the listing fields from this document and add English and Simplified Chinese localizations.
+10. Upload the 128×128 icon and the current localized 1280×800 screenshots.
+11. Paste the English reviewer notes and submit the version.
+12. Record the AMO item URL, submission time, status, and final dashboard text after submission.
+
+Keep submitted archives unchanged. Listing-only corrections may be made in AMO; code or package corrections require a new extension version.

@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="aui-font-mode" content="web">
+    <meta name="aui-viewport" content="mode=gui">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: transparent;
+            pointer-events: none;
+        }
+        #baeffect-fx-canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+        }
+        #baeffect-phira-layer {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body style="transform: translateZ(20000px);">
+<canvas id="baeffect-fx-canvas"></canvas>
+<div id="baeffect-phira-layer"></div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+﻿
+node_modules/
+.reasonix/
+dist/
+dist-firefox/
+release/
+*.log
+*.zip
+
+# 商店截图按需在本机生成，保留展示页源文件。
+store-assets/en/screenshot-*.png
+store-assets/zh_CN/screenshot-*.png

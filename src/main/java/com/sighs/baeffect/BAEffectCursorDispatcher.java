@@ -1,6 +1,6 @@
 package com.sighs.baeffect;
 
-import com.sighs.apricityui.instance.Client;
+import com.sighs.apricityui.client.Client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -44,6 +44,11 @@ public final class BAEffectCursorDispatcher {
 
     private static void syncCursor() {
         Minecraft minecraft = Minecraft.getInstance();
+
+        if (!Baeffect.flag("cursorEnabled")) {
+            BAEffectCursorController.hide();
+            return;
+        }
 
         Screen screen = minecraft.screen;
         if (screen == null) {

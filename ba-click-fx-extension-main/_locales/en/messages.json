@@ -1,0 +1,855 @@
+﻿{
+  "extensionName":
+  {
+    "message": "BA Click FX",
+    "description": "Extension name"
+  },
+  "extensionShortName":
+  {
+    "message": "BA Click FX",
+    "description": "Short extension name"
+  },
+  "extensionDescription":
+  {
+    "message": "Add game-inspired click rings, particles, and cursor trails to ordinary websites.",
+    "description": "Manifest and store short description"
+  },
+  "actionTitle":
+  {
+    "message": "BA Click FX settings"
+  },
+  "popupTagline":
+  {
+    "message": "Game-inspired pointer effects"
+  },
+  "globalEnable":
+  {
+    "message": "Enable globally"
+  },
+  "currentSite":
+  {
+    "message": "Current website"
+  },
+  "loading":
+  {
+    "message": "Loading…"
+  },
+  "siteEnable":
+  {
+    "message": "Enable on the current website"
+  },
+  "siteStorageNotice":
+  {
+    "message": "Disabling a website stores only its origin in local extension storage."
+  },
+  "effectsTitle":
+  {
+    "message": "Effects"
+  },
+  "clickEffect":
+  {
+    "message": "Click effect"
+  },
+  "clickEffectDescription":
+  {
+    "message": "Show rings and particles when clicking"
+  },
+  "cursorTrail":
+  {
+    "message": "Cursor trail"
+  },
+  "cursorTrailDescription":
+  {
+    "message": "Show a theme-colored trail while moving or dragging"
+  },
+  "trailAlways":
+  {
+    "message": "Always show while moving"
+  },
+  "trailAlwaysDescription":
+  {
+    "message": "When off, show the trail only while pressing the pointer"
+  },
+  "appearanceTitle":
+  {
+    "message": "Appearance & performance"
+  },
+  "themeColor":
+  {
+    "message": "Theme color"
+  },
+  "opacity":
+  {
+    "message": "Opacity"
+  },
+  "effectSize":
+  {
+    "message": "Effect size"
+  },
+  "previewEffect":
+  {
+    "message": "Preview click effect"
+  },
+  "openSettings":
+  {
+    "message": "Full settings"
+  },
+  "resetDefaults":
+  {
+    "message": "Reset"
+  },
+  "syncNotice":
+  {
+    "message": "Visual preferences may sync when browser sync is enabled"
+  },
+  "projectRepository":
+  {
+    "message": "Project repository"
+  },
+  "localFile":
+  {
+    "message": "Local file"
+  },
+  "pageUnavailable":
+  {
+    "message": "Page unavailable"
+  },
+  "statusSaved":
+  {
+    "message": "Settings saved"
+  },
+  "statusSaveFailed":
+  {
+    "message": "Could not save settings: $ERROR$",
+    "placeholders":
+    {
+      "error":
+      {
+        "content": "$1"
+      }
+    }
+  },
+  "statusPreviewUnsupported":
+  {
+    "message": "Preview is unavailable on this page"
+  },
+  "statusPreviewTriggered":
+  {
+    "message": "Preview triggered in the center of the page"
+  },
+  "statusEnableClick":
+  {
+    "message": "Enable the click effect first"
+  },
+  "statusRefreshForPreview":
+  {
+    "message": "Refresh the current page, then try again"
+  },
+  "statusReset":
+  {
+    "message": "Default settings restored"
+  },
+  "statusInternalPage":
+  {
+    "message": "Browser internal pages do not allow effects"
+  },
+  "statusPageNotLoaded":
+  {
+    "message": "The extension is not loaded on this page; refresh an ordinary webpage"
+  },
+  "statusRefreshForUpdate":
+  {
+    "message": "The extension was updated; refresh the current webpage"
+  },
+  "statusContentInitFailed":
+  {
+    "message": "Page effects could not initialize; refresh and try again"
+  },
+  "statusContentLoading":
+  {
+    "message": "Page effects are initializing"
+  },
+  "statusInitFailed":
+  {
+    "message": "Could not initialize: $ERROR$",
+    "placeholders":
+    {
+      "error":
+      {
+        "content": "$1"
+      }
+    }
+  },
+  "optionsEyebrow":
+  {
+    "message": "Extension settings"
+  },
+  "optionsIntroduction":
+  {
+    "message": "Manage appearance, performance, accessibility, and local website rules."
+  },
+  "appearanceOptionsDescription":
+  {
+    "message": "Effect presets manage appearance, render mode, DPR, and compositing together, then save through browser-provided extension sync storage."
+  },
+  "resetVisualSettings":
+  {
+    "message": "Reset effect settings"
+  },
+  "appearancePreset":
+  {
+    "message": "Effect preset"
+  },
+  "appearancePresetDescription":
+  {
+    "message": "Set appearance, render mode, DPR, and compositing together."
+  },
+  "presetClassic":
+  {
+    "message": "Close to original"
+  },
+  "presetLightBackground":
+  {
+    "message": "Light background"
+  },
+  "presetSoft":
+  {
+    "message": "Soft"
+  },
+  "presetPerformance":
+  {
+    "message": "Power saving"
+  },
+  "presetCustom":
+  {
+    "message": "Custom"
+  },
+  "preferencesTitle":
+  {
+    "message": "Language & motion"
+  },
+  "preferencesDescription":
+  {
+    "message": "Follow the system or choose an extension-specific preference."
+  },
+  "language":
+  {
+    "message": "Interface language"
+  },
+  "followSystem":
+  {
+    "message": "Follow system"
+  },
+  "motionPreference":
+  {
+    "message": "Motion preference"
+  },
+  "motionFull":
+  {
+    "message": "Full motion"
+  },
+  "motionReduced":
+  {
+    "message": "Reduce continuous motion"
+  },
+  "motionDescription":
+  {
+    "message": "Reduced motion keeps click effects but suppresses the continuous moving trail."
+  },
+  "disabledSitesTitle":
+  {
+    "message": "Disabled websites"
+  },
+  "disabledSitesCount":
+  {
+    "message": "local rules"
+  },
+  "clearSiteRules":
+  {
+    "message": "Clear website rules"
+  },
+  "searchSites":
+  {
+    "message": "Search websites"
+  },
+  "searchSitesPlaceholder":
+  {
+    "message": "Search origins"
+  },
+  "noDisabledSites":
+  {
+    "message": "No websites are disabled."
+  },
+  "removeSiteRule":
+  {
+    "message": "Remove"
+  },
+  "confirmClearSiteRules":
+  {
+    "message": "Clear every local website rule?"
+  },
+  "statusPresetApplied":
+  {
+    "message": "Effect preset applied"
+  },
+  "statusVisualReset":
+  {
+    "message": "Visual settings reset"
+  },
+  "statusSiteRuleRemoved":
+  {
+    "message": "Website rule removed"
+  },
+  "statusSiteRulesCleared":
+  {
+    "message": "Local website rules cleared"
+  },
+  "aboutTitle":
+  {
+    "message": "About & support"
+  },
+  "versionLabel":
+  {
+    "message": "Version"
+  },
+  "onlineDemo":
+  {
+    "message": "Online demo"
+  },
+  "supportAndFeedback":
+  {
+    "message": "Support & feedback"
+  },
+  "privacyPolicy":
+  {
+    "message": "Privacy policy"
+  },
+  "renderMode":
+  {
+    "message": "Raw render mode"
+  },
+  "renderFullWebGPU":
+  {
+    "message": "WebGPU HDR (experimental)"
+  },
+  "renderFullWebGL2":
+  {
+    "message": "Full WebGL2"
+  },
+  "renderSoftwareBloom":
+  {
+    "message": "Software Bloom"
+  },
+  "renderWebGL2Bloom":
+  {
+    "message": "WebGL2 Bloom"
+  },
+  "renderNativeBloom":
+  {
+    "message": "Native glow"
+  },
+  "webgpuHdrSettingsTitle":
+  {
+    "message": "WebGPU HDR presentation"
+  },
+  "webgpuHdrPeak":
+  {
+    "message": "Linear peak"
+  },
+  "webgpuHdrBrightness":
+  {
+    "message": "HDR overall brightness"
+  },
+  "webgpuHdrColorPreservation":
+  {
+    "message": "HDR hue preservation"
+  },
+  "webgpuHdrWhiteCore":
+  {
+    "message": "White-core strength"
+  },
+  "webgpuHdrWhiteStart":
+  {
+    "message": "White-core start"
+  },
+  "webgpuHdrWhiteEnd":
+  {
+    "message": "White-core end"
+  },
+  "outputCompositing":
+  {
+    "message": "Output compositing"
+  },
+  "outputCompositingScene":
+  {
+    "message": "Scene"
+  },
+  "outputCompositingBrowserOverlay":
+  {
+    "message": "Browser overlay"
+  },
+  "overlayAlphaPolicy":
+  {
+    "message": "Overlay Alpha policy"
+  },
+  "overlayAlphaPolicyCoverage":
+  {
+    "message": "Coverage"
+  },
+  "overlayAlphaPolicyVisualMax":
+  {
+    "message": "Visual max"
+  },
+  "overlayColorCompensation":
+  {
+    "message": "Unknown-background color compensation"
+  },
+  "overlayColorCompensationNone":
+  {
+    "message": "Off"
+  },
+  "overlayColorCompensationBrightCore":
+  {
+    "message": "Bright core"
+  },
+  "overlayAlphaLimit":
+  {
+    "message": "Overlay Alpha limit"
+  },
+  "overlayAlphaLimitDescription":
+  {
+    "message": "Only controls browser-overlay source-over capacity."
+  },
+  "hostCompositing":
+  {
+    "message": "Host compositing"
+  },
+  "hostCompositingSourceOver":
+  {
+    "message": "Source-over"
+  },
+  "hostCompositingScreen":
+  {
+    "message": "DOM Add (approximate)"
+  },
+  "hostCompositingPlusLighter":
+  {
+    "message": "Plus-lighter"
+  },
+  "isolatedCompositing":
+  {
+    "message": "Isolated compositing"
+  },
+  "isolatedCompositingDescription":
+  {
+    "message": "Composite the render layers in an isolated transparent group to improve color and contrast on light pages."
+  },
+  "lightBackgroundContrastAlpha":
+  {
+    "message": "Light-background contrast"
+  },
+  "lightBackgroundContrastAlphaDescription":
+  {
+    "message": "Add a subtle cyan outline outside Bloom; browser-overlay mode ignores this option."
+  },
+  "clickTimeScale":
+  {
+    "message": "Click time scale"
+  },
+  "trailTimeScale":
+  {
+    "message": "Trail time scale"
+  },
+  "timeScaleDescription":
+  {
+    "message": "Adjust click animation speed and trail decay speed independently."
+  },
+  "fxAdvancedSettingsTitle":
+  {
+    "message": "Advanced rendering"
+  },
+  "fxAdvancedSettingsDescription":
+  {
+    "message": "Choose the render backend, compositing, time scales, and light-background compatibility options precisely."
+  },
+  "maxDpr":
+  {
+    "message": "Maximum DPR"
+  },
+  "renderModeDescription":
+  {
+    "message": "Effect presets include the render mode and DPR; precise changes here switch to Custom."
+  },
+  "clickSettingsTitle":
+  {
+    "message": "Click effect"
+  },
+  "clickSettingsDescription":
+  {
+    "message": "Adjust rings, shards, Bloom, and the optional Hit and Flare layers."
+  },
+  "trailSettingsTitle":
+  {
+    "message": "Cursor trail"
+  },
+  "trailSettingsDescription":
+  {
+    "message": "Adjust the cursor path, trail shards, and Bloom parameters."
+  },
+  "enabledLabel":
+  {
+    "message": "On"
+  },
+  "disabledLabel":
+  {
+    "message": "Off"
+  },
+  "unitMilliseconds":
+  {
+    "message": "ms"
+  },
+  "unitCount":
+  {
+    "message": "count"
+  },
+  "unitMultiplier":
+  {
+    "message": "x"
+  },
+  "unitPixels":
+  {
+    "message": "px"
+  },
+  "unitPixelsPerSecond":
+  {
+    "message": "px/s"
+  },
+  "unitSamples":
+  {
+    "message": "samples"
+  },
+  "unitRatio":
+  {
+    "message": "ratio"
+  },
+  "unitScalar":
+  {
+    "message": "scalar"
+  },
+  "unitGammaHdr":
+  {
+    "message": "Gamma HDR"
+  },
+  "unitLinearHdr":
+  {
+    "message": "Linear HDR"
+  },
+  "rotationCounterclockwise":
+  {
+    "message": "Counterclockwise"
+  },
+  "rotationClockwise":
+  {
+    "message": "Clockwise"
+  },
+  "directionNegative":
+  {
+    "message": "Negative"
+  },
+  "directionPositive":
+  {
+    "message": "Positive"
+  },
+  "fxGroup_hit":
+  {
+    "message": "Hit"
+  },
+  "fxGroup_flare":
+  {
+    "message": "Flare"
+  },
+  "fxGroup_disk":
+  {
+    "message": "Center disk"
+  },
+  "fxGroup_rings":
+  {
+    "message": "Click rings"
+  },
+  "fxGroup_shards":
+  {
+    "message": "Triangle shards"
+  },
+  "fxGroup_trail":
+  {
+    "message": "Trail"
+  },
+  "fxGroup_bloom":
+  {
+    "message": "Bloom"
+  },
+  "fxParam_hit_enabled":
+  {
+    "message": "Enable Hit"
+  },
+  "fxParam_hit_lifetimeMs":
+  {
+    "message": "Hit lifetime"
+  },
+  "fxParam_hit_radius":
+  {
+    "message": "Hit radius"
+  },
+  "fxParam_flare_enabled":
+  {
+    "message": "Enable Flare"
+  },
+  "fxParam_flare_lifetimeMs":
+  {
+    "message": "Flare lifetime"
+  },
+  "fxParam_flare_radius":
+  {
+    "message": "Flare radius"
+  },
+  "fxParam_flare_rayCount":
+  {
+    "message": "Flare ray count"
+  },
+  "fxParam_disk_lifetimeMs":
+  {
+    "message": "Disk lifetime"
+  },
+  "fxParam_disk_radius":
+  {
+    "message": "Disk radius"
+  },
+  "fxParam_rings_count":
+  {
+    "message": "Ring count"
+  },
+  "fxParam_rings_lifetimeMs":
+  {
+    "message": "Ring lifetime"
+  },
+  "fxParam_rings_radiusMin":
+  {
+    "message": "Minimum ring radius"
+  },
+  "fxParam_rings_radiusMax":
+  {
+    "message": "Maximum ring radius"
+  },
+  "fxParam_rings_bandToOuterRadius":
+  {
+    "message": "Band-to-outer-radius ratio"
+  },
+  "fxParam_rings_widthStart":
+  {
+    "message": "Starting ring width scale"
+  },
+  "fxParam_rings_widthEnd":
+  {
+    "message": "Ending ring width scale"
+  },
+  "fxParam_rings_angularVelocityMultiplier":
+  {
+    "message": "Ring rotation speed multiplier"
+  },
+  "fxParam_rings_rotationDirection":
+  {
+    "message": "Ring rotation direction"
+  },
+  "fxParam_rings_hdrIntensity":
+  {
+    "message": "Ring HDR intensity"
+  },
+  "fxParam_rings_arcSamples":
+  {
+    "message": "Arc sample count"
+  },
+  "fxParam_rings_radialSamples":
+  {
+    "message": "Radial sample count"
+  },
+  "fxParam_rings_dissolveDirection":
+  {
+    "message": "Ring dissolve direction"
+  },
+  "fxParam_shards_hdrIntensity":
+  {
+    "message": "Shard HDR intensity"
+  },
+  "fxParam_shards_clickCount":
+  {
+    "message": "Click shard count"
+  },
+  "fxParam_shards_clickLifetimeMinMs":
+  {
+    "message": "Minimum click shard lifetime"
+  },
+  "fxParam_shards_clickLifetimeMaxMs":
+  {
+    "message": "Maximum click shard lifetime"
+  },
+  "fxParam_shards_clickRadius":
+  {
+    "message": "Click shard spawn radius"
+  },
+  "fxParam_shards_clickSpeedMin":
+  {
+    "message": "Minimum click shard speed"
+  },
+  "fxParam_shards_clickSpeedMax":
+  {
+    "message": "Maximum click shard speed"
+  },
+  "fxParam_shards_roundness":
+  {
+    "message": "Shard roundness"
+  },
+  "fxParam_shards_trailLifetimeMinMs":
+  {
+    "message": "Minimum trail shard lifetime"
+  },
+  "fxParam_shards_trailLifetimeMaxMs":
+  {
+    "message": "Maximum trail shard lifetime"
+  },
+  "fxParam_shards_trailRadius":
+  {
+    "message": "Trail shard spawn radius"
+  },
+  "fxParam_shards_trailSpeedMin":
+  {
+    "message": "Minimum trail shard speed"
+  },
+  "fxParam_shards_trailSpeedMax":
+  {
+    "message": "Maximum trail shard speed"
+  },
+  "fxParam_shards_sizeMin":
+  {
+    "message": "Minimum shard size"
+  },
+  "fxParam_shards_sizeMax":
+  {
+    "message": "Maximum shard size"
+  },
+  "fxParam_shards_trailSpacing":
+  {
+    "message": "Trail shard spacing"
+  },
+  "fxParam_shards_maxCount":
+  {
+    "message": "Maximum trail shard count"
+  },
+  "fxParam_trail_lifetimeMs":
+  {
+    "message": "Trail lifetime"
+  },
+  "fxParam_trail_geometryWidth":
+  {
+    "message": "Trail geometry width"
+  },
+  "fxParam_trail_width":
+  {
+    "message": "Visible trail width"
+  },
+  "fxParam_trail_minVertexDistance":
+  {
+    "message": "Minimum trail vertex distance"
+  },
+  "fxParam_trail_numCornerVertices":
+  {
+    "message": "Trail corner vertex count"
+  },
+  "fxParam_trail_numCapVertices":
+  {
+    "message": "Trail cap vertex count"
+  },
+  "fxParam_trail_outerGlowWidth":
+  {
+    "message": "Trail outer glow width"
+  },
+  "fxParam_trail_trailOpacity":
+  {
+    "message": "Overall trail opacity"
+  },
+  "fxParam_bloom_threshold":
+  {
+    "message": "Bloom threshold"
+  },
+  "fxParam_bloom_softKnee":
+  {
+    "message": "Bloom soft knee"
+  },
+  "fxParam_bloom_clamp":
+  {
+    "message": "Bloom prefilter clamp"
+  },
+  "fxParam_bloom_intensity":
+  {
+    "message": "Bloom intensity"
+  },
+  "fxParam_bloom_diffusion":
+  {
+    "message": "Bloom diffusion"
+  },
+  "fxParam_bloom_resolutionScale":
+  {
+    "message": "Bloom resolution scale"
+  },
+  "fxParam_bloom_emissionRange":
+  {
+    "message": "Bloom emission range"
+  },
+  "fxParam_bloom_diskEmission":
+  {
+    "message": "Disk emission intensity"
+  },
+  "fxParam_bloom_trailEmission":
+  {
+    "message": "Trail emission intensity"
+  },
+  "fxParam_bloom_trailCoverageScale":
+  {
+    "message": "Trail coverage scale"
+  },
+  "fxParam_bloom_trailEmissionAlpha":
+  {
+    "message": "Trail emission alpha"
+  },
+  "fxParam_bloom_clickEmissionScale":
+  {
+    "message": "Click emission scale"
+  },
+  "fxParam_bloom_ringEmissionAlpha":
+  {
+    "message": "Ring emission alpha"
+  },
+  "fxParam_bloom_diskEmissionAlpha":
+  {
+    "message": "Disk emission alpha"
+  },
+  "fxParam_bloom_ringBlur":
+  {
+    "message": "Native ring blur"
+  },
+  "fxParam_bloom_ringAlpha":
+  {
+    "message": "Native ring glow alpha"
+  },
+  "fxParam_bloom_diskBlur":
+  {
+    "message": "Native disk blur"
+  },
+  "fxParam_bloom_diskAlpha":
+  {
+    "message": "Native disk glow alpha"
+  },
+  "fxParam_bloom_trailAlpha":
+  {
+    "message": "Native trail glow alpha"
+  }
+}

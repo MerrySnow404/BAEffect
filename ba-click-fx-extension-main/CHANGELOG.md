@@ -1,0 +1,249 @@
+﻿# Changelog
+
+All notable changes to BA Click FX Extension are documented in this file.
+
+## [Unreleased]
+
+## [1.2.5] - 2026-10-14
+
+### Added
+
+- Added an English README and bilingual usage, rendering, and development guides; included the guides in the Firefox source archive.
+
+### Changed
+
+- Upgraded the pinned npm core `ba-click-fx` from `1.3.3` to `1.3.13`, inheriting its runtime allocation and GPU upload optimizations, trail lifetime fixes, drawing-area coordinate handling, and initialization cleanup fixes.
+- Bundled upstream's lossless texture and geometry compression with synchronous decoding, zero-intensity Bloom optimizations, and idle working-cache reclamation. Public exports, types, defaults, and Schema remain unchanged from core `1.3.9`.
+- Included the full fflate MIT license in the extension packages because the core now embeds its runtime decoder.
+- Kept the extension compatible with Schema 2 and all 66 public parameters. The settings page follows upstream's ring sampling defaults (`rings.arcSamples: 64`, `rings.radialSamples: 1`) while retaining saved overrides.
+- Clarified installation and release instructions, removed README screenshots, and kept store screenshots as locally generated submission assets.
+
+## [1.2.4] - 2026-09-14
+
+### Added
+
+- Added a README Star-history chart and daily automated collection, with downloadable CSV data on the dedicated `star-history` branch.
+
+### Changed
+
+- Upgraded `ba-click-fx` from `1.3.2` to `1.3.3`, inheriting its native click-glow diffusion improvements and native trail width/blur calibration. The public API and Schema 2 with 66 parameters remain compatible with the existing extension settings.
+- Documented the shared appearance presets and their core API parameters in the README.
+
+## [1.2.3] - 2026-09-08
+
+### Changed
+
+- Upgraded `ba-click-fx` from `1.3.1` to `1.3.2`, inheriting the Unity material-queue draw order across Canvas, WebGL2, and WebGPU backends.
+
+## [1.2.2] - 2026-08-20
+
+### Changed
+
+- Breaking: removed persisted `fxParamSchemaVersion` and `storageSchemaVersion` fields. The pinned core Schema remains a compile-time contract, and old version keys are ignored without migration or write-back.
+- Stopped persisting the derived `preset` field; preset selection is reconstructed from the actual appearance, rendering, and compositing settings.
+- Removed the remaining storage reads, writes, and fixture data for those redundant compatibility markers.
+
+## [1.2.1] - 2026-08-20
+
+### Changed
+
+- Breaking: removed all backward-compatibility migrations now that the install base is small. Storage schema advances to version 6 as a clean baseline; existing records are read through the current schema without migration.
+- Removed the legacy synced `disabledSites` merge and its settings-page cleanup card, along with the related localization strings. Only local site rules are read.
+- Removed the effect-parameter schema 0/1 migrations; saved parameters on retired paths (for example `bloom.scatter`, `rootDurationMs`) are dropped instead of being rewritten, and incoming future schema versions are normalized to the current one.
+- Removed the compositing-contract backfill migration and the `transparent-overlay` compatibility branch; unrecognized values fall back to defaults.
+- Removed the deprecated `MediaQueryList.addListener` fallback and dead code (`expandFxParams`, `mergeFxParams`), shrinking the bundled content script.
+
+## [1.2.0] - 2026-08-20
+
+### Changed
+
+- Upgraded `ba-click-fx` from `1.2.29` to `1.3.1`.
+- Removed the Legacy rendering mode profile and its options-page entry, following upstream's removal of Legacy rendering. Saved `renderMode` values of `legacy` now fall back to the default `full-webgl2`; the Soft and Power-saving appearance presets use `native-bloom`, which keeps the Canvas2D + native glow backend combination.
+- Effect-parameter defaults are now single-valued per parameter; the per-mode default machinery was removed along with upstream's mode defaults.
+- Theme color mapping follows the new upstream default `relative-oklch`, preserving chroma and perceived lightness instead of shifting hue only.
+
+## [1.1.17] - 2026-08-14
+
+### Changed
+
+- Upgraded `ba-click-fx` from `1.2.24` to `1.2.29`, inheriting its fullscreen Canvas geometry and mobile pointer/touch lifecycle fixes. The extension keeps its explicit preset DPR values and the upstream effect-parameter Schema remains at version 2 with 66 parameters.
+
+## [1.1.16] - 2026-08-11
+
+### Changed
+
+- Upgraded `ba-click-fx` from `1.2.23` to `1.2.24` (patch-level upstream update).
+
+## [1.1.15] - 2026-08-05
+
+### Added
+
+- Added a Light background effect preset using Full WebGL2, browser-overlay output, legacy visual-maximum Alpha, no color compensation, an `0.85` Alpha limit, Source-over host compositing, and the extension's implicit unknown-background reference.
+
+### Changed
+
+- Upgraded `ba-click-fx` from `1.2.21` to `1.2.23`; the extension now follows the versioned Schema 2 with 66 public effect parameters, including the `shards.roundness` control.
+- Unified the toolbar popup and Full settings around one Effect preset selector. The duplicated visible quality selector and its underlying storage field were removed; render mode and DPR are now the single rendering source of truth.
+- Renamed the default visible preset from Classic to Close to original without changing its compatible `classic` storage identifier.
+- Effect preset state is now derived from the actual appearance, render, DPR, and compositing values, so partial sync updates cannot leave a stale preset label.
+
+## [1.1.14] - 2026-08-02
+
+### Changed
+
+- Upgraded `ba-click-fx` from `1.2.20` to `1.2.21`, inheriting its WebGPU Extended Surface pause/resume and stale output-state cleanup. The public Schema, extension defaults, DOM Add contract, and settings surface remain unchanged; the upstream demo-only CSS HDR UI is intentionally not bundled.
+
+## [1.1.13] - 2026-08-02
+
+### Changed
+
+- Upgraded `ba-click-fx` from `1.2.7` to `1.2.20` and adopted its versioned 65-parameter Schema, complete WebGPU backend, HDR output status, host-surface capability contract, atomic parameter patch API, mode-specific reset baselines, and compositing-reference fixes.
+- Browser-overlay host compositing now exposes the upstream `screen` option for light or changing web backgrounds, and new or missing configurations default to this DOM Add combination without replacing stored user choices.
+- Full settings now derives its initial state, reset values, advanced-parameter baselines, and store preview from the extension defaults; controls ignored by DOM Add are disabled until a compatible compositing mode is selected.
+- Full settings now includes experimental WebGPU HDR rendering and all six Extended-output calibration controls while retaining Full WebGL2 as the extension default. The HDR defaults use the core runtime baseline rather than the upstream demo presets.
+- Full settings now includes full WebGL2 rendering, output and isolated compositing, light-background contrast, click/trail timing, and every public upstream effect parameter.
+- Click and trail timing controls now expose the upstream minimum multiplier of `0.01`.
+- Highest quality now requests Full WebGL2 and falls back directly to Canvas 2D native glow when unavailable; Software Bloom remains available only as an explicit Full-settings mode. Balanced remains Legacy and Advanced remains native glow.
+
+### Fixed
+
+- DOM Add now declares the core's host surface as caller-owned and applies the resolved `screen` or `plus-lighter` mode exactly once to the extension's outer fixed host. This lets the final layer group blend with the webpage instead of being isolated inside the host and composited back with an opaque-looking source-over result.
+
+### Migration
+
+- Stored Schema 0 effect overrides migrate atomically to Schema 1; the removed `bloom.scatter` path is replaced by the current `bloom.diffusion` default while rejected values remain reportable.
+
+## [1.1.3] - 2026-07-21
+
+### Changed
+
+- Upgraded `ba-click-fx` from `1.2.6` to `1.2.7`.
+- Highest quality now prefers WebGL2 Bloom and automatically falls back to software Bloom when WebGL2 is unavailable; Balanced remains Legacy and Advanced remains native glow.
+- Full settings now exposes every effect control from the upstream demo: raw render mode, maximum DPR, rings, shards, Bloom, Hit/Flare, and trail parameters.
+- Advanced effect overrides use a validated sparse sync record and are reapplied after render-mode changes.
+
+### Fixed
+
+- Matched untouched Classic effect parameters to the upstream demo: scale `1`, opacity `1`, click and trail enabled, and continuous movement trail disabled. Existing custom choices remain unchanged.
+- Preserved Legacy-specific rendering while replaying user overrides and kept the native-glow trail calibration linked to the Bloom trail control.
+
+## [1.1.2] - 2026-07-20
+
+### Added
+
+- Added quality and language selectors to the toolbar popup so common preferences can be changed without opening Full settings.
+- Added Balanced, Advanced, and Highest quality modes, mapped to Legacy, native glow, and software Bloom respectively.
+
+### Changed
+
+- Upgraded `ba-click-fx` from `1.2.3` to `1.2.6` and pinned the exact package version.
+- Let the core own its rendering canvases inside the extension's closed Shadow DOM, enabling the enhanced renderer's additive and light-background contrast layers.
+- Updated the three appearance presets to use the new quality model; the Power-saving preset now uses Balanced rendering with its existing lower opacity and scale.
+
+### Migration
+
+- Existing `balanced` and `high` values keep working. The removed `performance` quality value safely falls back to Balanced.
+
+## [1.1.1] - 2026-07-17
+
+### Changed
+
+- Upgraded `ba-click-fx` from `^1.2.1` to `^1.2.3` (internal robustness improvements: `structuredClone` for deep copies, `setFxParam` range validation, instance-level `themeHueShift`, `clearTrail` no longer clears unrelated effects).
+
+## [1.1.0] - 2026-07-17
+
+### Changed
+
+- Migrated from `ba-click-fx` v1.1.x setter API to v1.2.x unified API: `setColor(r,g,b)` → `setThemeColor(hex)`, five individual setters (`setOpacity`/`setScale`/`setClick`/`setTrail`/`setTrailAlways`) → batch `updateConfig()`.
+- Simplified quality profiles to `maxDpr` only; `trailRenderScale`, `minRenderScale`, and `maxBackingPixels` removed as the upstream no longer supports them.
+- Removed dead code: `getRenderOptions`, `hexToRgb`, `MAX_BACKING_PIXELS`.
+- Constructor now passes `scale`, `opacity`, `clickEnabled`, `trailEnabled`, `trailAlways`, and `maxDpr` directly instead of the removed `render` option.
+
+### Compatibility
+
+- All user-facing features preserved: click effects, cursor trails, hover trails (`trailAlways`), per-site disable, quality tiers.
+- `ba-click-fx` v1.2.x is a required upgrade; v1.1.x is no longer supported.
+
+## [1.0.6] - 2026-07-14
+
+### Added
+
+- Dedicated Firefox Manifest V3 build with a stable Gecko ID and an explicit no-data-collection declaration for AMO.
+- Deterministic Firefox submission ZIP, reviewer-rebuildable Firefox source ZIP, and combined SHA-256 inventory.
+- `web-ext` lint as a zero-warning Firefox release gate.
+- Firefox runtime checklist, AMO listing copy, privacy answers, permission explanations, reviewer notes, and manual submission instructions.
+- Refreshed English and Simplified Chinese store screenshots for the current popup, site control, and full settings page.
+
+### Changed
+
+- Split the shared Manifest from small Chromium and Firefox target overlays while retaining one content, popup, options, storage, and localization codebase.
+- Extended CI, release validation, and GitHub Release assets to cover Chromium, Firefox, and Firefox source packages.
+- Standardized local development, CI, Release, and AMO source rebuild instructions on Node.js 24 LTS.
+- Set Firefox Desktop 140 and Firefox for Android 142 as the declared minimum versions required by Mozilla's built-in data collection permission manifest field. The prepared AMO listing targets Firefox Desktop only.
+
+### Compatibility
+
+- User settings remain on storage schema v2, and the popup/content message protocol remains v2.
+- Chromium permissions, host matches, minimum Chrome/Edge version, bundled core `ba-click-fx 1.1.11`, and visible runtime behavior are unchanged.
+
+## [1.0.5] - 2026-07-14
+
+### Added
+
+- Dedicated options page for appearance presets, quality, language, motion preferences, local website-rule management, privacy, support, and project links.
+- Classic, Soft, and Power-saving appearance presets with an explicit Custom state.
+- System, Simplified Chinese, and English interface-language choices.
+- System, full-motion, and reduced-motion choices; reduced motion preserves click effects while suppressing the continuous moving trail.
+- Storage schema v2 migration, local site-rule search/removal/clear controls, and an explicit legacy synced-rule cleanup action.
+- Version/tag/changelog validation for GitHub releases.
+
+### Changed
+
+- Upgraded `ba-click-fx` from `1.1.6` to `1.1.11`.
+- Replaced private upstream state and trail workarounds with the public trail lifecycle API.
+- Replaced estimated DPR limiting with the core package's total backing-store pixel budget.
+- Moved explicitly disabled website origins from `storage.sync` to `storage.local`; visual preferences remain in browser-provided sync storage.
+- Simplified the popup around global, current-site, click, trail, preview, and full-settings actions.
+- Added structured content-script readiness and update status reporting.
+- Stopped tracking generated `dist` files; CI and Release workflows now build and upload artifacts.
+- Raised the development runtime requirement to Node.js 22.
+
+### Migration
+
+- Existing synced website rules are merged into local storage idempotently on first v1.0.5 use.
+- The old synced copy is retained to protect other devices that have not updated. Users may remove it explicitly from the options page after every device has upgraded.
+- `v1.0.4` was intentionally skipped; its planned reliability and release improvements are included in `v1.0.5`.
+
+## [1.0.2] - 2026-07-12
+
+### Added
+
+- English and Simplified Chinese extension localization.
+- Store submission copy, reviewer notes, privacy disclosures, and release checklist.
+- Public privacy policy, support links, and store URL inventory.
+- Chrome/Edge promotional assets and localized screenshots.
+- Cross-platform Chromium ZIP packaging and store-asset validation.
+
+### Changed
+
+- Upgraded `ba-click-fx` to `1.1.6`.
+- Added an in-product disclosure for site-specific origin storage.
+- Changed the default locale to Simplified Chinese; non-Chinese browser languages use English and detection failures fall back to Chinese.
+- Added a project-repository link to the extension popup.
+
+## [1.0.1] - 2026-07-11
+
+### Changed
+
+- Upgraded `ba-click-fx` to `1.1.5`.
+- Published the first tagged Chromium release.
+
+## [1.0.0] - 2026-07-11
+
+### Added
+
+- Manifest V3 content script with click rings, particles, and cursor trails.
+- Global and per-site controls.
+- Color, opacity, scale, and quality settings.
+- Closed Shadow DOM Canvas isolation and background-tab resource release.
+- UTF-8 BOM and LF validation for project text files.

@@ -1,133 +1,268 @@
 package com.sighs.baeffect;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.sighs.apricityui.ApricityUI;
+import com.sighs.apricityui.canvas.CanvasRenderingContext2D;
+import com.sighs.apricityui.client.Client;
 import com.sighs.apricityui.element.Canvas;
 import com.sighs.apricityui.init.Document;
-import com.sighs.apricityui.instance.Client;
-import com.sighs.apricityui.resource.HTML;
-import com.sighs.apricityui.style.Position;
-import com.sighs.apricityui.style.Size;
+import com.sighs.apricityui.init.Element;
+import com.sighs.apricityui.layout.Position;
+import com.sighs.apricityui.parser.HTML;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 
-@Mod.EventBusSubscriber(modid = Baeffect.MODID, value = Dist.CLIENT)
-public class BASparkOverlay {
-    private static final String DOC_PATH = "__runtime/baspark-canvas-overlay__.html";
-    private static final String CANVAS_ID = "baspark-canvas";
+final class BAClickFxOverlay {
+    private static final String DOC_PATH = "baeffect/clickfx.html";
+    private static final String CANVAS_ID = "baeffect-fx-canvas";
+    private static final String PHIRA_LAYER_ID = "baeffect-phira-layer";
     private static final String DOC_TEMPLATE = """
-            <body style="position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;">
-              <canvas id="baspark-canvas" style="position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;"></canvas>
+            <meta name="aui-font-mode" content="web">
+            <meta name="aui-viewport" content="mode=gui">
+            <body style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;">
+              <canvas id="baeffect-fx-canvas" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;"></canvas>
+              <div id="baeffect-phira-layer" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;"></div>
             </body>
             """;
 
-    private static final double BASE_FRAME_MS = 1000.0 / 60.0;
-    private static final double MAX_DELTA_MS = 100.0;
-    private static final double TRAIL_STEP = 2.0;
-    private static final int MAX_TRAIL_POINTS = 16;
-    private static final double EFFECT_RENDER_SCALE = 0.3;
+    private static final double TAU = Math.PI * 2.0D;
+    private static final double MAX_FRAME_MS = 100.0D;
+    private static final int MAX_TRAIL_POINTS = 64;
+    private static final int[] WHITE = {255, 255, 255};
+    private static final StringBuilder RGBA = new StringBuilder(48);
 
-    private static final List<WaveState> WAVES = new ArrayList<>();
-    private static final List<SparkState> SPARKS = new ArrayList<>();
+    private static final double[][] RING_RADIUS_KEYS = {
+            {0.007209778D, 0.42050898D, 2.4004734D, 2.4004734D},
+            {0.21392822D, 0.7159773D, 0.9115745D, 0.9115745D},
+            {1.0D, 1.0D, 0.0D, 0.0D}};
+    private static final double[][] RING_DISSOLVE_KEYS = {
+            {0.0D, 1.0D, 0.0D, 0.0D},
+            {0.2D, 0.0D, 0.0D, 2.4249368D},
+            {1.0D, 1.0D, 0.27735636D, 0.27735636D}};
+    private static final double[][] RING_ANGULAR_MIN_KEYS = {{0.14903903D, 1.0D}, {1.0D, 0.45561826D}};
+    private static final double[][] RING_ANGULAR_MAX_KEYS = {{0.15865384D, 0.79881656D}, {1.0D, -0.06509134D}};
+    private static final double[][] RING_THICKNESS_KEYS = {{0.0072D, 2.4005D}, {0.2139D, 0.9116D}, {1.0D, 0.0D}};
+    private static final double[][] DISK_SCALE_KEYS = {{0.0D, 0.3258D}, {0.2139D, 0.7160D}, {1.0D, 1.0D}};
+    private static final double[][] DISK_ALPHA_KEYS = {{0.0D, 1.0D}, {0.1088D, 1.0D}, {1.0D, 0.0D}};
+    private static final double[][] HIT_ALPHA_KEYS = {{0.0D, 1.0D}, {0.4D, 0.8D}, {1.0D, 0.0D}};
+    private static final double[][] FLARE_ALPHA_KEYS = {{0.0D, 0.7D}, {0.5D, 0.3D}, {1.0D, 0.0D}};
+    private static final double[][] SHARD_ALPHA_KEYS = {
+            {0.0D, 1.0D}, {0.288D, 1.0D}, {0.365D, 0.0D}, {0.471D, 1.0D}, {0.574D, 0.0D},
+            {0.668D, 1.0D}, {0.756D, 0.0D}, {0.853D, 1.0D}, {1.0D, 1.0D}};
+    private static final double[][] SHARD_SCALE_KEYS = {{0.0D, 0.0D}, {0.1545D, 1.0D}, {1.0D, 0.0D}};
+
+    private static final List<Ring> RINGS = new ArrayList<>();
+    private static final List<Shard> SHARDS = new ArrayList<>();
+    private static final List<Disk> DISKS = new ArrayList<>();
+    private static final List<Flash> FLASHES = new ArrayList<>();
     private static final List<TrailPoint> TRAIL = new ArrayList<>();
-    private static final List<WaveState> WAVE_POOL = new ArrayList<>();
-    private static final List<SparkState> SPARK_POOL = new ArrayList<>();
 
-    private static boolean mouseDown = false;
-    private static Position lastTrailPos = null;
-    private static long lastFrameMs = 0L;
-    private static double effectScale = 1.5;
-    private static double effectOpacity = 1.0;
-    private static double effectSpeed = 1.0;
-    private static String effectColor = "45,175,255";
-    private static boolean alwaysTrailEnabled = false;
+    private static boolean mouseDown;
+    private static boolean hasTrailAnchor;
+    private static double trailAnchorX;
+    private static double trailAnchorY;
+    private static double trailSpacingAccumulator;
+    private static long lastFrameNanos;
+    private static boolean canvasDirty;
 
-    private BASparkOverlay() {
+    private static String themeCacheKey = "";
+    private static int[] themeCache = {76, 167, 255};
+    private static Canvas layoutCanvas;
+    private static int layoutWidth = -1;
+    private static int layoutHeight = -1;
+    private static int missingBodyTicks;
+    private static double layoutScale = -1.0D;
+
+    private BAClickFxOverlay() {
     }
 
-    @SubscribeEvent
-    public static void onMouseButton(InputEvent.MouseButton.Pre event) {
+    static void handleMouseButton(InputEvent.MouseButton.Pre event) {
         if (event.getButton() != 0) return;
+        if (Minecraft.getInstance().screen == null) return;
+        if (!Baeffect.flag("enabled")) return;
 
-        Position pos = Client.getMousePositionDirectly();
+        Position position = Client.getMousePositionDirectly();
         if (event.getAction() == InputConstants.PRESS) {
             mouseDown = true;
-            lastTrailPos = pos;
-            if (pos != null) {
-                spawnBurst(pos.x, pos.y);
+            hasTrailAnchor = false;
+            if (position != null) {
+                if (PhiraHitFx.isActive()) {
+                    PhiraHitFx.spawn(position.x, position.y, Baeffect.referenceUnit());
+                } else {
+                    boom(position.x, position.y);
+                }
             }
             return;
         }
-
         if (event.getAction() == InputConstants.RELEASE) {
             mouseDown = false;
-            lastTrailPos = null;
+            hasTrailAnchor = false;
         }
     }
 
-    @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
+    static void handleClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
 
+        if (Minecraft.getInstance().screen == null) {
+            mouseDown = false;
+            hasTrailAnchor = false;
+        }
+
         Document document = ensureOverlayLoaded();
         Canvas canvas = resolveCanvas(document);
         if (canvas == null) return;
+        updateLayout(document, canvas);
 
-        updateOverlayLayout(document, canvas);
-        if (lastFrameMs == 0L) {
-            lastFrameMs = System.nanoTime();
+        if (Minecraft.getInstance().screen == null && (hasEffects() || canvasDirty)) {
+            renderFrame();
         }
     }
 
-    @SubscribeEvent
-    public static void drawScreen(ScreenEvent.Render.Post event) {
-        if (Minecraft.getInstance().screen != null) {
-            BASparkOverlay.renderFrame();
+    private static boolean hasEffects() {
+        return !RINGS.isEmpty() || !SHARDS.isEmpty() || !DISKS.isEmpty()
+                || !FLASHES.isEmpty() || PhiraHitFx.hasEffects() || TRAIL.size() >= 2;
+    }
+
+    static void renderFrame() {
+        if (Minecraft.getInstance().screen == null && !hasEffects() && !canvasDirty) return;
+
+        try {
+            Document document = ensureOverlayLoaded();
+            Canvas canvas = resolveCanvas(document);
+            if (canvas == null) return;
+            updateLayout(document, canvas);
+
+            long now = System.nanoTime();
+            double deltaMs = lastFrameNanos == 0L ? 0.0D : Math.min((now - lastFrameNanos) / 1_000_000.0D, MAX_FRAME_MS);
+            lastFrameNanos = now;
+
+            updateState(deltaMs);
+            syncPhiraLayer(document);
+            render(canvas);
+        } catch (Throwable throwable) {
+            Baeffect.LOGGER.error("特效渲染异常，已清空当前特效：{}", String.valueOf(throwable));
+            RINGS.clear();
+            SHARDS.clear();
+            DISKS.clear();
+            FLASHES.clear();
+            TRAIL.clear();
+            lastFrameNanos = 0L;
         }
     }
 
-    public static void renderFrame() {
-        Document document = ensureOverlayLoaded();
-        Canvas canvas = resolveCanvas(document);
-        if (canvas == null) return;
+    /** 环的视口缩放：以上游 1080 高度为基准，保留分辨率自适应。 */
+    private static double ringScale() {
+        double height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+        double scale = height / 1080.0D * Math.max(0.01D, Baeffect.num("scale"));
+        return Math.max(0.35D, Math.min(3.0D, scale));
+    }
 
-        updateOverlayLayout(document, canvas);
+    static void boom(double x, double y) {
+        double unit = Baeffect.referenceUnit();
 
-        long now = System.nanoTime();
-        if (lastFrameMs == 0L) {
-            lastFrameMs = now;
+        DISKS.add(new Disk(x, y));
+
+        int ringCount = (int) Math.round(Math.max(0.0D, Baeffect.num("rings.count")));
+        double ringScale = ringScale();
+        for (int index = 0; index < ringCount; index++) {
+            RINGS.add(new Ring(x, y, index, ringCount, ringScale));
         }
-        double deltaMs = Math.min((now - lastFrameMs) / 1_000_000.0, MAX_DELTA_MS);
-        lastFrameMs = now;
-        double frameScale = (deltaMs / BASE_FRAME_MS) * effectSpeed;
 
-        updateTrailFromCursor();
-        updateState(frameScale);
-        render(canvas);
+        spawnShards(x, y, unit);
+
+        if (Baeffect.flag("hit.enabled")) {
+            FLASHES.add(Flash.hit(x, y, unit));
+        }
+        if (Baeffect.flag("flare.enabled")) {
+            FLASHES.add(Flash.flare(x, y, unit));
+        }
+    }
+
+    private static void spawnShards(double x, double y, double unit) {
+        int count = (int) Math.round(Math.max(0.0D, Baeffect.num("shards.clickCount")));
+        for (int index = 0; index < count; index++) {
+            double angle = randomAngle();
+            double radius = Baeffect.num("shards.clickRadius") * unit;
+            double speed = lerp(Baeffect.num("shards.clickSpeedMin"), Baeffect.num("shards.clickSpeedMax"), random()) * unit;
+
+            Shard shard = new Shard();
+            shard.x = x + Math.cos(angle) * radius;
+            shard.y = y + Math.sin(angle) * radius;
+            shard.vx = Math.cos(angle) * speed;
+            shard.vy = Math.sin(angle) * speed;
+            shard.rotation = randomAngle();
+            if (Baeffect.flag("rotationEnabled")) {
+                double degPerSecond = Baeffect.num("rotationSpeed");
+                shard.spin = Math.toRadians(degPerSecond) * (random() < 0.5D ? -1.0D : 1.0D);
+            } else {
+                shard.spin = (random() < 0.5D ? -1.0D : 1.0D) * 2.1621501D * (0.75D + random() * 0.5D);
+            }
+            shard.size = lerp(Baeffect.num("shards.sizeMin"), Baeffect.num("shards.sizeMax"), random()) * unit;
+            shard.life = Math.max(50.0D, lerp(
+                    Baeffect.num("shards.clickLifetimeMinMs"),
+                    Baeffect.num("shards.clickLifetimeMaxMs"), random()));
+            shard.timeScale = Baeffect.num("clickTimeScale");
+            SHARDS.add(shard);
+        }
+        capShards();
+    }
+
+    private static void spawnTrailShard(double x, double y, double unit) {
+        double angle = randomAngle();
+        double radius = Baeffect.num("shards.trailRadius") * unit;
+        double speed = lerp(
+                Baeffect.num("shards.trailSpeedMin"),
+                Baeffect.num("shards.trailSpeedMax"), random()) * unit;
+
+        Shard shard = new Shard();
+        shard.x = x + Math.cos(angle) * radius;
+        shard.y = y + Math.sin(angle) * radius;
+        shard.vx = Math.cos(angle) * speed;
+        shard.vy = Math.sin(angle) * speed;
+        shard.rotation = randomAngle();
+        shard.spin = (random() < 0.5D ? -1.0D : 1.0D) * 2.1621501D;
+        shard.size = lerp(Baeffect.num("shards.sizeMin"), Baeffect.num("shards.sizeMax"), random()) * unit * 0.7D;
+        shard.life = Math.max(50.0D, lerp(
+                Baeffect.num("shards.trailLifetimeMinMs"),
+                Baeffect.num("shards.trailLifetimeMaxMs"), random()));
+        shard.timeScale = Baeffect.num("trailTimeScale");
+        SHARDS.add(shard);
+        capShards();
+    }
+
+    private static void capShards() {
+        int maxCount = (int) Math.round(Baeffect.num("shards.maxCount"));
+        if (maxCount <= 0) {
+            SHARDS.clear();
+            return;
+        }
+        while (SHARDS.size() > maxCount) {
+            SHARDS.remove(0);
+        }
     }
 
     private static Document ensureOverlayLoaded() {
-        List<Document> docs = Document.get(DOC_PATH);
-        if (!docs.isEmpty()) {
-            Document document = docs.get(0);
+        List<Document> documents = Baeffect.documents(DOC_PATH);
+        if (!documents.isEmpty()) {
+            Document document = documents.get(0);
             document.setReloadPersistent(true);
             return document;
         }
 
-        HTML.putTemple(DOC_PATH, DOC_TEMPLATE);
-        Document document = Document.create(DOC_PATH);
-        if (document != null) {
+        Document document = Baeffect.createOverlay(DOC_PATH);
+        if (document == null || document.body == null) {
+            if (document != null) document.remove();
+            HTML.putTemple(DOC_PATH, DOC_TEMPLATE);
+            document = Baeffect.createOverlay(DOC_PATH);
+        }
+        if (document == null) {
+            Baeffect.LOGGER.error("特效画布创建失败：" + DOC_PATH);
+        } else {
             document.setReloadPersistent(true);
         }
         return document;
@@ -135,352 +270,740 @@ public class BASparkOverlay {
 
     private static Canvas resolveCanvas(Document document) {
         if (document == null) return null;
-        var element = document.getElementById(CANVAS_ID);
-        if (element instanceof Canvas canvas) {
-            return canvas;
-        }
-        return null;
+        return document.getElementById(CANVAS_ID) instanceof Canvas canvas ? canvas : null;
     }
 
-    private static void updateOverlayLayout(Document document, Canvas canvas) {
-        if (document == null || document.body == null || canvas == null) return;
+    private static void updateLayout(Document document, Canvas canvas) {
+        if (document == null || document.body == null) {
+            if (++missingBodyTicks % 100 == 0) {
+                Baeffect.LOGGER.error("特效画布缺少 body，无法定位尺寸（document={}）", document != null);
+            }
+            return;
+        }
+        missingBodyTicks = 0;
 
-        Size size = Client.getWindowSize();
-        double dpr = Minecraft.getInstance().getWindow().getGuiScale();
-        int logicalWidth = Math.max(1, (int) Math.round(size.width()));
-        int logicalHeight = Math.max(1, (int) Math.round(size.height()));
-        int pixelWidth = Math.max(1, (int) Math.round(logicalWidth * dpr));
-        int pixelHeight = Math.max(1, (int) Math.round(logicalHeight * dpr));
+        int logicalWidth = Math.max(1, Minecraft.getInstance().getWindow().getGuiScaledWidth());
+        int logicalHeight = Math.max(1, Minecraft.getInstance().getWindow().getGuiScaledHeight());
+
+        double guiScale = Math.max(0.5D, Minecraft.getInstance().getWindow().getGuiScale());
+        double renderScale = Math.max(0.5D, Math.min(guiScale, Math.max(1.0D, Baeffect.num("maxDpr"))));
+
+        if (canvas == layoutCanvas
+                && logicalWidth == layoutWidth
+                && logicalHeight == layoutHeight
+                && Math.abs(renderScale - layoutScale) < 1.0e-4D) {
+            return;
+        }
+
+        layoutCanvas = canvas;
+        layoutWidth = logicalWidth;
+        layoutHeight = logicalHeight;
+        layoutScale = renderScale;
+
+        int pixelWidth = Math.max(1, (int) Math.round(logicalWidth * renderScale));
+        int pixelHeight = Math.max(1, (int) Math.round(logicalHeight * renderScale));
 
         document.body.setAttribute("style",
-                "position:fixed;left:0;top:0;width:" + logicalWidth + "px;height:" + logicalHeight + "px;pointer-events:none;");
-
+                "position:absolute;left:0;top:0;width:" + logicalWidth + "px;height:" + logicalHeight
+                        + "px;pointer-events:none;");
         canvas.setAttribute("style",
-                "position:fixed;left:0;top:0;width:" + logicalWidth + "px;height:" + logicalHeight + "px;pointer-events:none;");
+                "position:absolute;left:0;top:0;width:" + logicalWidth + "px;height:" + logicalHeight
+                        + "px;pointer-events:none;");
+
+        Element phiraLayer = document.getElementById(PHIRA_LAYER_ID);
+        if (phiraLayer != null) {
+            phiraLayer.setAttribute("style",
+                    "position:absolute;left:0;top:0;width:" + logicalWidth + "px;height:" + logicalHeight
+                            + "px;pointer-events:none;overflow:visible;");
+        }
+
         if (canvas.getWidth() != pixelWidth) {
             canvas.setWidth(pixelWidth);
         }
         if (canvas.getHeight() != pixelHeight) {
             canvas.setHeight(pixelHeight);
         }
-        canvas.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
+        CanvasRenderingContext2D context = canvas.getContext("2d");
+        if (context != null) {
+            context.setTransform(renderScale, 0, 0, renderScale, 0, 0);
+        }
     }
 
-    private static void updateTrailFromCursor() {
-        Position pos = Client.getMousePositionDirectly();
-        if (pos == null) return;
-        if (!mouseDown && !alwaysTrailEnabled) return;
+    private static void updateState(double deltaMs) {
+        double frameMs = deltaMs <= 0.0D ? 16.6D : deltaMs;
+        double unit = Baeffect.referenceUnit();
+        double clickScale = Baeffect.num("clickTimeScale");
+        double trailScale = Baeffect.num("trailTimeScale");
 
-        if (lastTrailPos == null) {
-            lastTrailPos = pos;
+        if (!Baeffect.flag("enabled")) {
+            RINGS.clear();
+            SHARDS.clear();
+            DISKS.clear();
+            FLASHES.clear();
+            TRAIL.clear();
+            PhiraHitFx.clear();
             return;
         }
 
-        double dx = pos.x - lastTrailPos.x;
-        double dy = pos.y - lastTrailPos.y;
-        double distance = Math.hypot(dx, dy);
-        if (distance <= TRAIL_STEP) return;
+        sampleTrail(frameMs * trailScale, unit, trailScale);
 
-        TRAIL.add(new TrailPoint(pos.x, pos.y, 1.0));
-        if (TRAIL.size() > MAX_TRAIL_POINTS) {
+        double trailLife = Math.max(50.0D, Baeffect.num("trail.lifetimeMs"));
+        for (Iterator<TrailPoint> iterator = TRAIL.iterator(); iterator.hasNext(); ) {
+            TrailPoint point = iterator.next();
+            point.ageMs += frameMs * trailScale;
+            if (point.ageMs >= trailLife) {
+                iterator.remove();
+            }
+        }
+
+        if (PhiraHitFx.isActive()) {
+            RINGS.clear();
+            SHARDS.clear();
+            DISKS.clear();
+            FLASHES.clear();
+            PhiraHitFx.update(frameMs * clickScale);
+            return;
+        }
+        PhiraHitFx.clear();
+
+        double clickDelta = frameMs * clickScale;
+        for (Iterator<Ring> iterator = RINGS.iterator(); iterator.hasNext(); ) {
+            Ring ring = iterator.next();
+            ring.advance(clickDelta);
+            if (ring.age >= ring.life) {
+                iterator.remove();
+            }
+        }
+
+        for (Iterator<Disk> iterator = DISKS.iterator(); iterator.hasNext(); ) {
+            Disk disk = iterator.next();
+            disk.age += clickDelta;
+            if (disk.age >= disk.life) {
+                iterator.remove();
+            }
+        }
+
+        for (Iterator<Flash> iterator = FLASHES.iterator(); iterator.hasNext(); ) {
+            Flash flash = iterator.next();
+            flash.age += clickDelta;
+            if (flash.age >= flash.life) {
+                iterator.remove();
+            }
+        }
+
+        for (Iterator<Shard> iterator = SHARDS.iterator(); iterator.hasNext(); ) {
+            Shard shard = iterator.next();
+            double shardDelta = frameMs * shard.timeScale;
+            shard.age += shardDelta;
+            shard.x += shard.vx * shardDelta / 1000.0D;
+            shard.y += shard.vy * shardDelta / 1000.0D;
+            shard.rotation += shard.spin * shardDelta / 1000.0D;
+            if (shard.age >= shard.life) {
+                iterator.remove();
+            }
+        }
+    }
+
+    private static void sampleTrail(double trailDeltaMs, double unit, double trailScale) {
+        if (!Baeffect.flag("trailEnabled")) {
+            TRAIL.clear();
+            hasTrailAnchor = false;
+            return;
+        }
+
+        boolean always = Baeffect.flag("trailAlways") && !"reduced".equals(Baeffect.text("motionMode"));
+        if (!mouseDown && !always) {
+            hasTrailAnchor = false;
+            return;
+        }
+
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.screen == null) return;
+
+        Position position = Client.getMousePositionDirectly();
+        if (position == null) return;
+
+        if (!hasTrailAnchor) {
+            trailAnchorX = position.x;
+            trailAnchorY = position.y;
+            hasTrailAnchor = true;
+            return;
+        }
+
+        double distance = Math.hypot(position.x - trailAnchorX, position.y - trailAnchorY);
+        double minStep = Math.max(0.5D, Baeffect.num("trail.minVertexDistance") * unit);
+        if (distance < minStep) return;
+
+        TrailPoint point = new TrailPoint();
+        point.x = position.x;
+        point.y = position.y;
+        point.ageMs = 0.0D;
+        TRAIL.add(point);
+        while (TRAIL.size() > MAX_TRAIL_POINTS) {
             TRAIL.remove(0);
         }
 
-        if (ThreadLocalRandom.current().nextDouble() < 0.3) {
-            spawnDriftSpark(pos.x, pos.y);
-        }
-        lastTrailPos = pos;
-    }
-
-    private static void updateState(double frameScale) {
-        for (Iterator<TrailPoint> iterator = TRAIL.iterator(); iterator.hasNext(); ) {
-            TrailPoint point = iterator.next();
-            double fade = alwaysTrailEnabled ? 0.085 : (mouseDown ? 0.085 : 0.18);
-            point.life -= fade * frameScale;
-            if (point.life <= 0.0) {
-                iterator.remove();
-            }
+        double spacing = Math.max(1.0D, Baeffect.num("shards.trailSpacing") * unit);
+        trailSpacingAccumulator += distance;
+        while (trailSpacingAccumulator >= spacing) {
+            trailSpacingAccumulator -= spacing;
+            spawnTrailShard(position.x, position.y, unit);
         }
 
-        for (Iterator<WaveState> iterator = WAVES.iterator(); iterator.hasNext(); ) {
-            WaveState wave = iterator.next();
-            wave.life += frameScale;
-            wave.ring.life += frameScale;
-            wave.ring.ang -= wave.ring.rs * frameScale;
-            if (wave.life >= wave.max && wave.ring.life >= wave.ring.maxLife) {
-                WAVE_POOL.add(wave);
-                iterator.remove();
-            }
-        }
-
-        for (Iterator<SparkState> iterator = SPARKS.iterator(); iterator.hasNext(); ) {
-            SparkState spark = iterator.next();
-            spark.x += spark.vx * frameScale;
-            spark.y += spark.vy * frameScale;
-            spark.vx *= Math.pow(spark.f, frameScale);
-            spark.vy *= Math.pow(spark.f, frameScale);
-            spark.rot += spark.rs * frameScale;
-            spark.a -= spark.fadeRate * frameScale;
-            if (spark.a <= 0.0) {
-                SPARK_POOL.add(spark);
-                iterator.remove();
-            }
+        trailAnchorX = position.x;
+        trailAnchorY = position.y;
+        if (trailDeltaMs <= 0.0D || trailScale <= 0.0D) {
+            trailSpacingAccumulator = Math.min(trailSpacingAccumulator, spacing * 4.0D);
         }
     }
 
+    //绘制
     private static void render(Canvas canvas) {
-        Canvas.CanvasRenderingContext2D ctx = canvas.getContext("2d");
-        if (ctx == null) return;
+        CanvasRenderingContext2D context = canvas.getContext("2d");
+        if (context == null) return;
 
-        ctx.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        if (WAVES.isEmpty() && SPARKS.isEmpty() && TRAIL.isEmpty()) return;
+        boolean active = !RINGS.isEmpty() || !SHARDS.isEmpty() || !DISKS.isEmpty()
+                || !FLASHES.isEmpty() || TRAIL.size() >= 2;
 
-        ctx.setGlobalCompositeOperation("lighter");
-        renderTrail(ctx);
-        renderWaves(ctx);
-        renderSparks(ctx);
-        ctx.setGlobalCompositeOperation("source-over");
-    }
+        if (!active && !canvasDirty) return;
 
-    private static void renderTrail(Canvas.CanvasRenderingContext2D ctx) {
-        if (TRAIL.size() < 2) return;
-
-        double visualScale = visualScale();
-        TrailPoint first = TRAIL.get(0);
-        TrailPoint last = TRAIL.get(TRAIL.size() - 1);
-
-        Canvas.CanvasLinearGradient glowGradient = ctx.createLinearGradient(first.x, first.y, last.x, last.y);
-        glowGradient.addColorStop(0, "rgba(" + effectColor + ",0.10)");
-        glowGradient.addColorStop(0.35, "rgba(" + effectColor + ",0.18)");
-        glowGradient.addColorStop(1, "rgba(" + effectColor + ",0.30)");
-
-        Canvas.CanvasLinearGradient coreGradient = ctx.createLinearGradient(first.x, first.y, last.x, last.y);
-        coreGradient.addColorStop(0, "rgba(" + effectColor + ",0.16)");
-        coreGradient.addColorStop(0.55, "rgba(" + effectColor + ",0.70)");
-        coreGradient.addColorStop(1, "rgba(" + effectColor + ",0.98)");
-
-        ctx.setLineWidth(7.0 * visualScale);
-        ctx.setStrokeStyle(glowGradient);
-        ctx.setShadowColor("rgba(" + effectColor + ",0.45)");
-        ctx.setShadowBlur(4.5 * visualScale);
-        ctx.setShadowOffsetX(0);
-        ctx.setShadowOffsetY(0);
-        strokeSmoothTrailPath(ctx);
-
-        ctx.setShadowColor("transparent");
-        ctx.setShadowBlur(0);
-
-        ctx.setLineWidth(4.4 * visualScale);
-        ctx.setStrokeStyle(coreGradient);
-        strokeSmoothTrailPath(ctx);
-    }
-
-    private static void strokeSmoothTrailPath(Canvas.CanvasRenderingContext2D ctx) {
-        if (TRAIL.size() < 2) return;
-
-        ctx.beginPath();
-        TrailPoint first = TRAIL.get(0);
-        ctx.moveTo(first.x, first.y);
-
-        if (TRAIL.size() == 2) {
-            TrailPoint end = TRAIL.get(1);
-            ctx.lineTo(end.x, end.y);
-            ctx.stroke();
+        context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        canvasDirty = active;
+        if (!active) {
+            lastFrameNanos = 0L;
             return;
         }
 
-        for (int i = 1; i < TRAIL.size() - 1; i++) {
-            TrailPoint current = TRAIL.get(i);
-            TrailPoint next = TRAIL.get(i + 1);
-            double midX = (current.x + next.x) * 0.5;
-            double midY = (current.y + next.y) * 0.5;
-            ctx.quadraticCurveTo(current.x, current.y, midX, midY);
-        }
+        boolean additive = !"normal".equals(Baeffect.text("compositing"));
+        context.setGlobalCompositeOperation(additive ? "lighter" : "source-over");
 
-        TrailPoint penultimate = TRAIL.get(TRAIL.size() - 2);
-        TrailPoint last = TRAIL.get(TRAIL.size() - 1);
-        ctx.quadraticCurveTo(penultimate.x, penultimate.y, last.x, last.y);
-        ctx.stroke();
+        double unit = Baeffect.referenceUnit();
+        renderTrail(context, unit);
+        renderDisks(context, unit);
+        renderRings(context, unit);
+        renderFlashes(context, unit);
+        renderShards(context, unit);
+
+        context.setGlobalCompositeOperation("source-over");
     }
 
-    private static void renderWaves(Canvas.CanvasRenderingContext2D ctx) {
-        double visualScale = visualScale();
-        for (WaveState wave : WAVES) {
-            double progress = clamp01(wave.life / wave.max);
-            double ease = 1.0 - Math.pow(1.0 - progress, 3.0);
-            wave.r = 26.0 * visualScale * ease;
-            double alpha = clamp01(1.0 - progress);
+    private static void syncPhiraLayer(Document document) {
+        if (document == null) return;
+        Element layer = document.getElementById(PHIRA_LAYER_ID);
+        if (layer == null) {
+            if (System.nanoTime() - phiraLayerLogged > 5_000_000_000L) {
+                phiraLayerLogged = System.nanoTime();
+            }
+            return;
+        }
 
-            if (alpha > 0.0) {
-                ctx.beginPath();
-                ctx.arc(wave.x, wave.y, wave.r, 0, Math.PI * 2.0, false);
-                ctx.setFillStyle("rgba(" + effectColor + "," + format(alphaValue(alpha)) + ")");
-                ctx.fill();
+        List<PhiraHitFx.Hit> hits = PhiraHitFx.hits();
+        while (layer.children.size() > hits.size()) {
+            layer.children.get(layer.children.size() - 1).remove();
+        }
+        while (layer.children.size() < hits.size()) {
+            Element node = document.createElement("DIV");
+            node.setAttribute("style", "position:absolute;pointer-events:none;"
+                    + "background-repeat:no-repeat;");
+            layer.append(node);
+        }
+
+        for (int index = 0; index < hits.size(); index++) {
+            PhiraHitFx.Hit hit = hits.get(index);
+            Element node = layer.children.get(index);
+            if (node == null) continue;
+
+            int frame = hit.frameIndex();
+
+            double width = hit.size;
+            double height = hit.imageWidth > 0 && hit.imageHeight > 0
+                    ? hit.size * hit.imageHeight / hit.imageWidth
+                    : hit.size;
+
+            double progress = hit.lifeMs <= 0.0D ? 1.0D : Math.min(1.0D, hit.ageMs / hit.lifeMs);
+            double alpha = progress > 0.75D ? Math.max(0.0D, (1.0D - progress) / 0.25D) : 1.0D;
+
+            double angle = hit.rotation == 0.0D ? 0.0D
+                    : hit.rotation * Baeffect.num("rotationSpeed") * hit.ageMs / 1000.0D;
+            String style = "position:absolute;pointer-events:none;"
+                    + "left:" + (hit.x - width / 2.0D) + "px;"
+                    + "top:" + (hit.y - height / 2.0D) + "px;"
+                    + "width:" + width + "px;height:" + height + "px;"
+                    + "opacity:" + alpha + ";"
+                    + (angle == 0.0D ? "" : "transform:rotate(" + angle + "deg);")
+                    + "background-image:url(" + hit.texture + "/frame_" + frame + ".png);"
+                    + "background-repeat:no-repeat;"
+                    + "background-size:100% 100%;";
+            node.setAttribute("style", style);
+        }
+    }
+
+    private static long phiraLayerLogged;
+
+    private static void renderRings(CanvasRenderingContext2D context, double unit) {
+        boolean bloom = Baeffect.flag("bloom");
+        double intensity = Math.min(8.0D, Baeffect.num("rings.hdrIntensity")) / 8.0D;
+        double band = Baeffect.num("rings.bandToOuterRadius");
+        double widthStart = Baeffect.num("rings.widthStart");
+        double widthEnd = Baeffect.num("rings.widthEnd");
+        double arcSamples = Math.max(3.0D, Math.min(1024.0D, Baeffect.num("rings.arcSamples")));
+        int direction = Baeffect.num("rings.dissolveDirection") >= 0.0D ? 1 : -1;
+
+        for (Ring ring : RINGS) {
+            double progress = clamp01(ring.age / ring.life);
+
+            double outer = ring.baseRadius * hermite(RING_RADIUS_KEYS, progress);
+            double width = outer * band * lerp(widthStart, widthEnd, progress);
+            if (width <= 0.001D) continue;
+            double radius = outer - width * 0.5D;
+            if (radius <= 0.5D) continue;
+
+            double threshold = clamp01(hermite(RING_DISSOLVE_KEYS, progress));
+            double alpha = 0.45D + intensity * 0.9D;
+
+            double circumference = TAU * radius;
+            int samples = (int) Math.max(32.0D, Math.max(Math.ceil(circumference), arcSamples));
+
+            context.save();
+            context.translate(ring.x, ring.y);
+            context.rotate(ring.angle);
+            for (int index = 0; index < samples; index++) {
+                double start = (double) index / samples;
+                double end = (double) (index + 1) / samples;
+                double center = (start + end) * 0.5D;
+                double position = direction >= 0 ? center : 1.0D - center;
+                if (position < threshold) continue;
+
+                context.beginPath();
+                context.arc(0.0D, 0.0D, radius, start * TAU, end * TAU, false);
+                context.setLineWidth(Math.max(0.5D, width));
+                context.setStrokeStyle(rgba(themeColor(), alpha));
+                context.stroke();
+
+                if (bloom) {
+                    context.beginPath();
+                    context.arc(0.0D, 0.0D, radius, start * TAU, end * TAU, false);
+                    context.setLineWidth(Math.max(0.5D, width) * 2.6D);
+                    context.setStrokeStyle(rgba(themeColor(),
+                            alpha * 0.18D * bloomGain() * Baeffect.num("bloom.ringAlpha") * 2.6D));
+                    context.stroke();
+                }
+            }
+            context.restore();
+        }
+    }
+
+    /** 平滑插值关键帧（上游 Jo）：每行 [t, value]。 */
+    private static double smooth(double[][] keys, double t) {
+        if (keys == null || keys.length == 0) return 0.0D;
+        double clamped = clamp01(t);
+        if (clamped <= keys[0][0]) return keys[0][1];
+        for (int index = 1; index < keys.length; index++) {
+            double[] previous = keys[index - 1];
+            double[] current = keys[index];
+            if (clamped > current[0]) continue;
+            double span = current[0] - previous[0];
+            double local = span > 0.0D ? (clamped - previous[0]) / span : 1.0D;
+            double eased = local * local * (3.0D - 2.0D * local);
+            return lerp(previous[1], current[1], eased);
+        }
+        return keys[keys.length - 1][1];
+    }
+
+    /** Hermite 关键帧插值：每行 [t, value, inTangent?, outTangent?]，与上游 Z() 一致。 */
+    private static double hermite(double[][] keys, double t) {
+        if (keys == null || keys.length == 0) return 0.0D;
+        double clamped = clamp01(t);
+        if (clamped <= keys[0][0]) return keys[0][1];
+        for (int index = 1; index < keys.length; index++) {
+            double[] previous = keys[index - 1];
+            double[] current = keys[index];
+            if (clamped > current[0]) continue;
+
+            double span = current[0] - previous[0];
+            double local = span > 0.0D ? (clamped - previous[0]) / span : 1.0D;
+            double squared = local * local;
+            double cubed = squared * local;
+            double outTangent = previous.length > 3 ? previous[3] : 0.0D;
+            double inTangent = current.length > 2 ? current[2] : 0.0D;
+            double h00 = 2.0D * cubed - 3.0D * squared + 1.0D;
+            double h10 = cubed - 2.0D * squared + local;
+            double h01 = -2.0D * cubed + 3.0D * squared;
+            double h11 = cubed - squared;
+            return h00 * previous[1] + h10 * outTangent * span
+                    + h01 * current[1] + h11 * inTangent * span;
+        }
+        return keys[keys.length - 1][1];
+    }
+
+    private static void pathArc(CanvasRenderingContext2D context, double centerX, double centerY,
+                                double radius, double start, double sweep, int samples) {
+        context.beginPath();
+        if (samples >= 32) {
+            context.arc(centerX, centerY, radius, start, start + sweep, false);
+            return;
+        }
+
+        int steps = Math.max(3, samples);
+        for (int index = 0; index <= steps; index++) {
+            double angle = start + sweep * index / steps;
+            double pointX = centerX + Math.cos(angle) * radius;
+            double pointY = centerY + Math.sin(angle) * radius;
+            if (index == 0) {
+                context.moveTo(pointX, pointY);
+            } else {
+                context.lineTo(pointX, pointY);
+            }
+        }
+    }
+
+    private static void renderDisks(CanvasRenderingContext2D context, double unit) {
+        boolean bloom = Baeffect.flag("bloom");
+
+        for (Disk disk : DISKS) {
+            double progress = clamp01(disk.age / disk.life);
+            double alpha = key(progress, DISK_ALPHA_KEYS);
+            double radius = Baeffect.num("disk.radius") * unit * key(progress, DISK_SCALE_KEYS);
+            if (radius <= 0.5D || alpha <= 0.01D) continue;
+
+            if (bloom) {
+                context.beginPath();
+                context.arc(disk.x, disk.y, radius * 1.9D, 0.0D, TAU, false);
+                context.setFillStyle(rgba(themeColor(),
+                        alpha * 0.10D * bloomGain() * Baeffect.num("bloom.diskAlpha") * 1.6D));
+                context.fill();
+
+                context.beginPath();
+                context.arc(disk.x, disk.y, radius * 1.35D, 0.0D, TAU, false);
+                context.setFillStyle(rgba(themeColor(),
+                        alpha * 0.18D * bloomGain() * Baeffect.num("bloom.diskAlpha") * 1.6D));
+                context.fill();
             }
 
-            double ringProgress = clamp01(wave.ring.life / wave.ring.maxLife);
-            for (RingSegment segment : wave.ring.segs) {
-                double shrink = Math.max(0.0, 1.0 - ringProgress);
-                double length = segment.len * shrink;
-                double start = wave.ring.ang + segment.off;
-                ctx.beginPath();
-                ctx.arc(wave.x, wave.y, wave.r + 3.0 * visualScale, start, start + length, false);
-                ctx.setLineWidth(3.7 * 0.8 * visualScale);
-                ctx.setStrokeStyle("rgba(245,248,252," + format(alphaValue(1.0 - ringProgress)) + ")");
-                ctx.stroke();
+            context.beginPath();
+            context.arc(disk.x, disk.y, radius, 0.0D, TAU, false);
+            context.setFillStyle(rgba(themeColor(), alpha * 0.4D));
+            context.fill();
+
+            context.beginPath();
+            context.arc(disk.x, disk.y, Math.max(0.5D, radius * 0.9D), 0.0D, TAU, false);
+            context.setFillStyle(rgba(WHITE, alpha * 0.92D));
+            context.fill();
+        }
+    }
+
+    private static void renderFlashes(CanvasRenderingContext2D context, double unit) {
+        for (Flash flash : FLASHES) {
+            double progress = clamp01(flash.age / flash.life);
+            double alpha = key(progress, flash.rayCount > 0 ? FLARE_ALPHA_KEYS : HIT_ALPHA_KEYS);
+            if (alpha <= 0.01D) continue;
+
+            if (flash.rayCount <= 0) {
+                context.beginPath();
+                context.arc(flash.x, flash.y, Math.max(0.5D, flash.radius), 0.0D, TAU, false);
+                context.setFillStyle(rgba(themeColor(), alpha * 0.5D));
+                context.fill();
+                context.beginPath();
+                context.arc(flash.x, flash.y, Math.max(0.5D, flash.radius * 0.62D), 0.0D, TAU, false);
+                context.setFillStyle(rgba(WHITE, alpha));
+                context.fill();
+                continue;
+            }
+
+            double length = flash.radius * (0.55D + 0.45D * progress);
+            context.setLineWidth(Math.max(0.8D, 1.6D * unit * 2.0D));
+            context.setStrokeStyle(rgba(themeColor(), alpha));
+            for (double angle : flash.rays) {
+                context.beginPath();
+                context.moveTo(flash.x, flash.y);
+                context.lineTo(flash.x + Math.cos(angle) * length, flash.y + Math.sin(angle) * length);
+                context.stroke();
             }
         }
     }
 
-    private static void renderSparks(Canvas.CanvasRenderingContext2D ctx) {
-        for (SparkState spark : SPARKS) {
-            ctx.save();
-            ctx.translate(spark.x, spark.y);
-            ctx.rotate(spark.rot);
-            ctx.beginPath();
-            ctx.moveTo(0, -spark.s);
-            ctx.lineTo(spark.s * 0.6, spark.s * 0.6);
-            ctx.lineTo(-spark.s * 0.6, spark.s * 0.6);
-            ctx.closePath();
-            ctx.setFillStyle("rgba(255,255,255," + format(alphaValue(spark.a)) + ")");
-            ctx.fill();
-            ctx.restore();
+    private static void renderShards(CanvasRenderingContext2D context, double unit) {
+        double intensity = Math.min(8.0D, Baeffect.num("shards.hdrIntensity")) / 8.0D;
+
+        for (Shard shard : SHARDS) {
+            double progress = clamp01(shard.age / shard.life);
+            double alpha = key(progress, SHARD_ALPHA_KEYS) * (0.55D + intensity * 0.75D);
+            double scale = key(progress, SHARD_SCALE_KEYS);
+            if (alpha <= 0.01D || scale <= 0.001D) continue;
+
+            double size = shard.size * scale;
+            if (size <= 0.3D) continue;
+            int[] color = progress < 0.24D ? WHITE : themeColor();
+
+            context.save();
+            context.translate(shard.x, shard.y);
+            context.rotate(shard.rotation);
+            shardPath(context, size, Baeffect.num("shards.roundness"));
+            context.setFillStyle(rgba(color, alpha));
+            context.fill();
+            context.restore();
         }
     }
 
-    private static void spawnBurst(double x, double y) {
-        WaveState wave;
-        if (!WAVE_POOL.isEmpty()) {
-            wave = WAVE_POOL.remove(WAVE_POOL.size() - 1);
-            wave.x = x;
-            wave.y = y;
-            wave.life = 0.0;
-            wave.max = 18.0;
-            wave.r = 0.0;
-            wave.ring.ang = randomAngle();
-            wave.ring.life = 0.0;
-        } else {
-            wave = new WaveState(x, y);
+    private static void shardPath(CanvasRenderingContext2D context, double size, double roundness) {
+        double radius = clamp01(roundness);
+        if (radius >= 0.99D) {
+            context.beginPath();
+            context.arc(0.0D, 0.0D, size * 0.72D, 0.0D, TAU, false);
+            return;
         }
-        WAVES.add(wave);
 
-        int particleCount = 4;
-        double visualScale = visualScale();
-        double speedAdjust = visualScale / 1.5;
-        for (int i = 0; i < particleCount; i++) {
-            double angle = randomAngle();
-            double speed = (4.8 + ThreadLocalRandom.current().nextDouble() * 2.0) * speedAdjust;
-            SparkState spark = obtainSpark();
-            spark.x = x;
-            spark.y = y;
-            spark.vx = Math.cos(angle) * speed;
-            spark.vy = Math.sin(angle) * speed;
-            spark.rot = randomAngle();
-            spark.rs = (ThreadLocalRandom.current().nextDouble() - 0.5) * 0.28;
-            spark.s = (4.0 + ThreadLocalRandom.current().nextDouble() * 3.0) * visualScale;
-            spark.a = 1.0;
-            spark.f = 0.9;
-            spark.fadeRate = 0.032;
-            SPARKS.add(spark);
+        double[] xs = {0.0D, size * 0.62D, -size * 0.62D};
+        double[] ys = {-size, size * 0.62D, size * 0.62D};
+        context.beginPath();
+
+        if (radius <= 0.01D) {
+            context.moveTo(xs[0], ys[0]);
+            context.lineTo(xs[1], ys[1]);
+            context.lineTo(xs[2], ys[2]);
+            context.closePath();
+            return;
+        }
+
+        double cut = radius * 0.5D;
+        for (int index = 0; index < 3; index++) {
+            int previous = (index + 2) % 3;
+            int next = (index + 1) % 3;
+            double inX = xs[index] + (xs[previous] - xs[index]) * cut;
+            double inY = ys[index] + (ys[previous] - ys[index]) * cut;
+            double outX = xs[index] + (xs[next] - xs[index]) * cut;
+            double outY = ys[index] + (ys[next] - ys[index]) * cut;
+
+            if (index == 0) {
+                context.moveTo(inX, inY);
+            } else {
+                context.lineTo(inX, inY);
+            }
+            context.quadraticCurveTo(xs[index], ys[index], outX, outY);
+        }
+        context.closePath();
+    }
+
+    private static void renderTrail(CanvasRenderingContext2D context, double unit) {
+        if (TRAIL.size() < 2) return;
+
+        double lifetime = Math.max(50.0D, Baeffect.num("trail.lifetimeMs"));
+        double opacity = Baeffect.num("trail.trailOpacity");
+        boolean bloom = Baeffect.flag("bloom");
+        double scale = ringScale();
+        double width = Math.max(1.0D, Baeffect.num("trail.geometryWidth") * scale);
+        double glowWidth = Math.max(2.0D, Baeffect.num("trail.outerGlowWidth") * scale);
+        double emission = Math.max(0.0D, Baeffect.num("bloom.trailAlpha")) * 4.0D;
+
+
+        if (bloom && emission > 0.01D) {
+            for (int index = 1; index < TRAIL.size(); index++) {
+                TrailPoint previous = TRAIL.get(index - 1);
+                TrailPoint current = TRAIL.get(index);
+                double alpha = segmentAlpha(previous, current, lifetime) * opacity * emission;
+                if (alpha <= 0.004D) continue;
+                context.beginPath();
+                context.moveTo(previous.x, previous.y);
+                context.lineTo(current.x, current.y);
+                context.setLineWidth(glowWidth);
+                context.setStrokeStyle(rgba(themeColor(), alpha * 0.25D * bloomGain()));
+                context.stroke();
+            }
+        }
+
+        for (int index = 1; index < TRAIL.size(); index++) {
+            TrailPoint previous = TRAIL.get(index - 1);
+            TrailPoint current = TRAIL.get(index);
+            double alpha = segmentAlpha(previous, current, lifetime) * opacity;
+            if (alpha <= 0.004D) continue;
+            context.beginPath();
+            context.moveTo(previous.x, previous.y);
+            context.lineTo(current.x, current.y);
+            context.setLineWidth(width);
+            context.setStrokeStyle(rgba(themeColor(), alpha));
+            context.stroke();
         }
     }
 
-    private static void spawnDriftSpark(double x, double y) {
-        double angle = randomAngle();
-        double visualScale = visualScale();
-        double speedAdjust = visualScale / 1.5;
-        SparkState spark = obtainSpark();
-        spark.x = x + Math.cos(angle) * 10.0 * visualScale;
-        spark.y = y + Math.sin(angle) * 10.0 * visualScale;
-        spark.vx = Math.cos(angle) * 1.3 * speedAdjust;
-        spark.vy = Math.sin(angle) * 1.3 * speedAdjust;
-        spark.rot = randomAngle();
-        spark.rs = 0.16;
-        spark.s = 9.0 * visualScale;
-        spark.a = 0.7;
-        spark.f = 0.95;
-        spark.fadeRate = 0.026;
-        SPARKS.add(spark);
+    /** 上游轨迹按顶点年龄淡出：两端年龄取平均。 */
+    private static double segmentAlpha(TrailPoint previous, TrailPoint current, double lifetime) {
+        double previousFade = clamp01(1.0D - previous.ageMs / lifetime);
+        double currentFade = clamp01(1.0D - current.ageMs / lifetime);
+        return (previousFade + currentFade) * 0.5D;
     }
 
-    private static SparkState obtainSpark() {
-        if (!SPARK_POOL.isEmpty()) {
-            return SPARK_POOL.remove(SPARK_POOL.size() - 1);
+    private static int[] themeColor() {
+        String hex = Baeffect.text("color");
+        if (hex.equals(themeCacheKey)) return themeCache;
+
+        try {
+            int rgb = Integer.parseInt(hex.substring(1), 16);
+            themeCache = new int[]{(rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF};
+        } catch (RuntimeException exception) {
+            themeCache = new int[]{76, 167, 255};
         }
-        return new SparkState();
+        themeCacheKey = hex;
+        return themeCache;
     }
 
-    private static double alphaValue(double value) {
-        return clamp01(value * effectOpacity);
+    private static double bloomGain() {
+        return Math.max(0.0D, Math.min(2.0D, Baeffect.num("bloom.intensity") / 1.7D));
+    }
+
+    private static String rgba(int[] color, double alpha) {
+        return rgba(color[0], color[1], color[2], alpha);
+    }
+
+    private static String rgba(int red, int green, int blue, double alpha) {
+        double value = clamp01(alpha * Baeffect.num("opacity"));
+        if ("normal".equals(Baeffect.text("compositing"))) {
+            value = Math.min(value, clamp01(Baeffect.num("overlayAlphaLimit")));
+        }
+
+        int scaled = (int) Math.round(value * 1000.0D);
+        RGBA.setLength(0);
+        RGBA.append("rgba(").append(red).append(',').append(green).append(',').append(blue).append(',');
+        RGBA.append(scaled / 1000).append('.');
+        int rest = scaled % 1000;
+        if (rest < 100) RGBA.append('0');
+        if (rest < 10) RGBA.append('0');
+        RGBA.append(rest).append(')');
+        return RGBA.toString();
+    }
+
+    private static double key(double time, double[][] keys) {
+        double t = clamp01(time);
+        if (t <= keys[0][0]) return keys[0][1];
+        for (int index = 1; index < keys.length; index++) {
+            if (t <= keys[index][0]) {
+                double span = keys[index][0] - keys[index - 1][0];
+                double local = span <= 0.0D ? 0.0D : (t - keys[index - 1][0]) / span;
+                return lerp(keys[index - 1][1], keys[index][1], local);
+            }
+        }
+        return keys[keys.length - 1][1];
+    }
+
+    private static double lerp(double start, double end, double amount) {
+        return start + (end - start) * amount;
     }
 
     private static double clamp01(double value) {
-        return Math.max(0.0, Math.min(1.0, value));
+        return Math.max(0.0D, Math.min(1.0D, value));
     }
 
-    private static String format(double value) {
-        return String.format(Locale.ROOT, "%.4f", value);
+    private static double random() {
+        return ThreadLocalRandom.current().nextDouble();
     }
 
     private static double randomAngle() {
-        return ThreadLocalRandom.current().nextDouble() * Math.PI * 2.0;
+        return random() * TAU;
     }
 
-    private static double visualScale() {
-        return effectScale * EFFECT_RENDER_SCALE;
-    }
-
-    private static final class TrailPoint {
+    private static final class Ring {
         private final double x;
         private final double y;
-        private double life;
+        private final double baseRadius;
+        private final double life;
+        private final double angularBlend;
+        private double angularVelocity;
+        private double angle;
+        private double age;
 
-        private TrailPoint(double x, double y, double life) {
+        private Ring(double x, double y, int index, int count, double unit) {
             this.x = x;
             this.y = y;
-            this.life = life;
+            // 上游：radius = random(radiusMin, radiusMax)，再乘视口缩放。
+            this.baseRadius = Math.max(0.5D, lerp(
+                    Baeffect.num("rings.radiusMin"),
+                    Baeffect.num("rings.radiusMax"),
+                    random()) * unit);
+            this.life = Math.max(50.0D, Baeffect.num("rings.lifetimeMs"));
+            this.angle = randomAngle();
+            this.angularBlend = random();
+            this.angularVelocity = angularVelocity(this.angularBlend, 0.0D);
+        }
+
+        private void advance(double deltaMs) {
+            double previous = age;
+            age += deltaMs;
+            double progress = life <= 0.0D ? 1.0D : (previous + age) * 0.5D / life;
+            angularVelocity = angularVelocity(angularBlend, progress);
+            angle += angularVelocity * (deltaMs / 1000.0D);
+        }
+
+        /** 上游 tc()：速度 = lerp(minKeys, maxKeys, blend) × multiplier × direction。 */
+        private static double angularVelocity(double blend, double progress) {
+            double min = smooth(RING_ANGULAR_MIN_KEYS, progress);
+            double max = smooth(RING_ANGULAR_MAX_KEYS, progress);
+            double direction = Baeffect.num("rings.rotationDirection") < 0.0D ? -1.0D : 1.0D;
+            return lerp(min, max, clamp01(blend))
+                    * Baeffect.num("rings.angularVelocityMultiplier") * direction;
         }
     }
 
-    private static final class WaveState {
-        private double x;
-        private double y;
-        private double life;
-        private double max = 18.0;
-        private double r;
-        private final RingState ring = new RingState();
-
-        private WaveState(double x, double y) {
-            this.x = x;
-            this.y = y;
-        }
-    }
-
-    private static final class RingState {
-        private double ang = randomAngle();
-        private final RingSegment[] segs = new RingSegment[]{
-                new RingSegment(-0.25 * Math.PI, 1.15 * Math.PI),
-                new RingSegment(0.0, 1.15 * Math.PI),
-                new RingSegment(0.25 * Math.PI, 1.15 * Math.PI)
-        };
-        private double life;
-        private double maxLife = 30.0;
-        private double rs = 0.08;
-    }
-
-    private record RingSegment(double off, double len) {
-    }
-
-    private static final class SparkState {
+    private static final class Shard {
         private double x;
         private double y;
         private double vx;
         private double vy;
-        private double rot;
-        private double rs;
-        private double s;
-        private double a;
-        private double f;
-        private double fadeRate;
+        private double rotation;
+        private double spin;
+        private double size;
+        private double age;
+        private double life;
+        private double timeScale;
+    }
+
+    private static final class Disk {
+        private final double x;
+        private final double y;
+        private final double life;
+        private double age;
+
+        private Disk(double x, double y) {
+            this.x = x;
+            this.y = y;
+            this.life = Math.max(50.0D, Baeffect.num("disk.lifetimeMs"));
+        }
+    }
+
+    private static final class Flash {
+        private final double x;
+        private final double y;
+        private final double radius;
+        private final double life;
+        private final int rayCount;
+        private final double[] rays;
+        private double age;
+
+        private Flash(double x, double y, double radius, double life, int rayCount) {
+            this.x = x;
+            this.y = y;
+            this.radius = radius;
+            this.life = life;
+            this.rayCount = rayCount;
+            this.rays = new double[Math.max(0, rayCount)];
+            for (int index = 0; index < this.rays.length; index++) {
+                this.rays[index] = (TAU * index / Math.max(1, rayCount)) + (random() - 0.5D) * 0.25D;
+            }
+        }
+
+        private static Flash hit(double x, double y, double unit) {
+            return new Flash(x, y, Baeffect.num("hit.radius") * unit,
+                    Math.max(20.0D, Baeffect.num("hit.lifetimeMs")), 0);
+        }
+
+        private static Flash flare(double x, double y, double unit) {
+            return new Flash(x, y, Baeffect.num("flare.radius") * unit,
+                    Math.max(20.0D, Baeffect.num("flare.lifetimeMs")),
+                    (int) Math.round(Math.max(1.0D, Baeffect.num("flare.rayCount"))));
+        }
+    }
+
+    private static final class TrailPoint {
+        private double x;
+        private double y;
+        private double ageMs;
     }
 }

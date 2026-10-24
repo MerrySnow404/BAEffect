@@ -1,0 +1,181 @@
+﻿import { existsSync, readFileSync, statSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const requireScreenshots = process.argv.includes('--require-screenshots');
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+function readJson(path)
+{
+  return JSON.parse(readFileSync(path, 'utf8').replace(/^\uFEFF/, ''));
+}
+
+function readText(relativePath)
+{
+  return readFileSync(assertFile(relativePath), 'utf8').replace(/^\uFEFF/, '');
+}
+
+function assert(condition, message)
+{
+  if (!condition)
+  {
+    throw new Error(message);
+  }
+}
+
+function assertFile(relativePath)
+{
+  const path = join(rootDir, relativePath);
+
+  assert(existsSync(path), `缺少文件：${relativePath}`);
+  assert(statSync(path).isFile(), `缺少文件：${relativePath}`);
+
+  return path;
+}
+
+function assertPng(relativePath, expectedWidth, expectedHeight)
+{
+  const content = readFileSync(assertFile(relativePath));
+
+  assert(content.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE), `${relativePath} 不是 PNG。`);
+
+  const width = content.readUInt32BE(16);
+  const height = content.readUInt32BE(20);
+
+  assert(
+    width === expectedWidth && height === expectedHeight,
+    `${relativePath} 尺寸应为 ${expectedWidth}×${expectedHeight}，实际为 ${width}×${height}。`,
+  );
+}
+
+const metadata = readJson(join(rootDir, 'store-submission', 'metadata.json'));
+const packageJson = readJson(join(rootDir, 'package.json'));
+const manifest = readJson(join(rootDir, 'manifest.json'));
+
+assert(metadata.extensionVersion === packageJson.version, '商店元数据与 package.json 版本不一致。');
+assert(metadata.extensionVersion === manifest.version, '商店元数据与 Manifest 版本不一致。');
+// 包哈希描述最后一次准备的发布物；开发依赖可先行，正式发布时再强制同步。
+assert(metadata.locales.join(',') === 'zh_CN,en', '商店语言必须以 zh_CN 为默认语言并包含 en。');
+assert(
+  metadata.chromiumPackage === `release/ba-click-fx-extension-v${manifest.version}-chromium.zip`,
+  '商店元数据中的 Chromium ZIP 文件名与版本不一致。',
+);
+assert(
+  /^[0-9A-F]{64}$/.test(metadata.chromiumSha256),
+  '商店元数据中的 Chromium ZIP SHA-256 格式无效。',
+);
+assert(
+  metadata.firefoxPackage === `release/ba-click-fx-extension-v${manifest.version}-firefox.zip`,
+  '商店元数据中的 Firefox ZIP 文件名与版本不一致。',
+);
+assert(
+  metadata.firefoxSourcePackage
+    === `release/ba-click-fx-extension-v${manifest.version}-firefox-source.zip`,
+  '商店元数据中的 Firefox 源码包文件名与版本不一致。',
+);
+
+for (const shaField of ['firefoxSha256', 'firefoxSourceSha256'])
+{
+  assert(/^[0-9A-F]{64}$/.test(metadata[shaField]), `${shaField} 格式无效。`);
+}
+
+assert(
+  metadata.firefoxGeckoId === 'ba-click-fx-extension@cialloking.top',
+  '商店元数据中的 Firefox Gecko ID 不一致。',
+);
+assert(metadata.firefoxMinimumVersion === '140.0', 'Firefox 最低版本元数据不一致。');
+assert(
+  metadata.firefoxAndroidMinimumVersion === '142.0',
+  'Firefox Android 最低版本元数据不一致。',
+);
+assert(metadata.firefoxSubmissionPlatform === 'Firefox Desktop', 'Firefox 提交平台不一致。');
+assert(metadata.firefoxCategory === 'Appearance', 'Firefox AMO 分类不一致。');
+assert(metadata.firefoxDistribution === 'On this site', 'Firefox AMO 分发方式不一致。');
+assert(
+  metadata.assets.englishScreenshots.length >= 1 &&
+  metadata.assets.englishScreenshots.length <= 5,
+  'Chrome 英文截图数量必须为 1–5 张。',
+);
+assert(
+  metadata.assets.chineseScreenshots.length >= 1 &&
+  metadata.assets.chineseScreenshots.length <= 5,
+  'Chrome 中文截图数量必须为 1–5 张。',
+);
+
+for (const urlKey of [
+  'homepageUrl',
+  'privacyPolicyUrl',
+  'edgePrivacyPolicyUrl',
+  'supportUrl',
+  'repositoryUrl',
+  'issueTrackerUrl',
+])
+{
+  assert(/^https:\/\//.test(metadata[urlKey]), `${urlKey} 必须使用 HTTPS。`);
+}
+
+for (const path of [
+  'PRIVACY.md',
+  'SECURITY.md',
+  'CHANGELOG.md',
+  'store-submission/chrome-web-store.md',
+  'store-submission/edge-addons.md',
+  'store-submission/reviewer-notes.md',
+  'store-submission/data-inventory.md',
+  'store-submission/LOCAL_TEST_CHECKLIST.md',
+  'store-submission/release-checklist.md',
+  'store-submission/firefox-addons.md',
+  'store-submission/FIREFOX_TEST_CHECKLIST.md',
+  'SOURCE_BUILD.md',
+  'store-assets/source/popup-preview.html',
+  'store-assets/source/popup-mock.js',
+  'store-assets/source/popup-showcase.html',
+  'store-assets/source/options-preview.html',
+  'store-assets/source/options-mock.js',
+])
+{
+  assertFile(path);
+}
+
+const popupPreview = readText('store-assets/source/popup-preview.html');
+const popupShowcase = readText('store-assets/source/popup-showcase.html');
+
+assert(
+  popupPreview.includes("fetch('../../dist/popup/popup.html')"),
+  '商店弹窗预览必须复用当前构建页面，不能复制第二份弹窗结构。',
+);
+assert(
+  !/(?:Three quality modes|三档画质)/.test(popupShowcase),
+  '商店宣传文案不应继续声明已移除的独立画质入口。',
+);
+assert(
+  /(?:Light-background preset|浅色背景优化)/.test(popupShowcase),
+  '商店宣传文案缺少浅色背景优化预设。',
+);
+
+assertPng(metadata.assets.chromeIcon, 128, 128);
+assertPng(metadata.assets.logo, 300, 300);
+assertPng(metadata.assets.smallPromo, 440, 280);
+assertPng(metadata.assets.marqueePromo, 1400, 560);
+
+const screenshots = [
+  ...metadata.assets.englishScreenshots,
+  ...metadata.assets.chineseScreenshots,
+];
+let checkedScreenshots = 0;
+
+for (const screenshot of screenshots)
+{
+  // 截图不纳入 Git；普通 CI 允许缺失，商店提交前可显式要求全部截图齐备。
+  if (!requireScreenshots && !existsSync(join(rootDir, screenshot)))
+  {
+    continue;
+  }
+
+  assertPng(screenshot, 1280, 800);
+  checkedScreenshots++;
+}
+
+console.log(`已校验 ${checkedScreenshots} 张本机截图，跳过 ${screenshots.length - checkedScreenshots} 张未生成的截图。`);
+console.log('商店元数据与仓库资源校验通过。');

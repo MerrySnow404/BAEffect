@@ -1,0 +1,8 @@
+name: Phigros Origin
+author: 芋祷|Pigeon Games
+description: Phigros原版皮肤
+hitFx: [8, 4]
+holdAtlas: [50, 50]
+holdAtlasMH: [99, 99]
+hitFxScale: 1.9
+hideParticles: true

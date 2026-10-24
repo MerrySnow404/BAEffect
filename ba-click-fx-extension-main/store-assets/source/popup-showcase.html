@@ -1,0 +1,127 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BA Click FX Popup Showcase</title>
+  <link rel="stylesheet" href="showcase.css">
+</head>
+<body class="showcase-page">
+  <div class="showcase-shell">
+    <header class="showcase-header">
+      <div class="showcase-brand">
+        <img src="../../icons/icon-128.png" alt="">
+        <span>BA Click FX</span>
+      </div>
+      <span id="fan-label" class="fan-label">Unofficial fan-made extension</span>
+    </header>
+
+    <main class="showcase-main">
+      <section class="showcase-copy">
+        <span id="eyebrow" class="eyebrow">Simple controls</span>
+        <h1 id="title">Make every effect feel like yours.</h1>
+        <p id="description">Control click feedback, cursor trails, effect presets, language, and individual websites from one focused popup.</p>
+        <div class="feature-row">
+          <span id="feature-1">Instant updates</span>
+          <span id="feature-2">Per-site control</span>
+          <span id="feature-3">Browser sync</span>
+        </div>
+      </section>
+
+      <section class="browser-card">
+        <iframe id="popup-frame" class="popup-frame" title="BA Click FX popup"></iframe>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const locale = params.get('lang') === 'zh_CN' ? 'zh_CN' : 'en';
+    const scene = params.get('scene') || 'popup';
+    const chinese = locale === 'zh_CN';
+    const copy =
+    {
+      en:
+      {
+        popup:
+        {
+          eyebrow: 'Simple controls',
+          title: 'Make every effect feel like yours.',
+          description: 'Use focused quick controls for click feedback, cursor trails, preview, and the current website.',
+          features: ['Instant updates', 'Per-site control', 'Full settings'],
+          state: 'default',
+        },
+        site:
+        {
+          eyebrow: 'Per-site control',
+          title: 'Quiet on one website. Active everywhere else.',
+          description: 'Disable only the current origin. The popup explains exactly what is saved and keeps every other website unchanged.',
+          features: ['Origin-only rule', 'Easy to reverse', 'No page content read'],
+          state: 'site-off',
+        },
+        appearance:
+        {
+          eyebrow: 'Appearance & performance',
+          title: 'Tune appearance and rendering together.',
+          description: 'Start with one effect preset, then fine-tune color, intensity, size, rendering, and compositing.',
+          features: ['Close to original', 'Light-background preset', 'Advanced controls'],
+          state: 'options',
+        },
+      },
+      zh_CN:
+      {
+        popup:
+        {
+          eyebrow: '简洁控制',
+          title: '让每一种特效都更合心意。',
+          description: '使用专注的常用开关控制点击反馈、光标拖尾、预览和当前网站。',
+          features: ['即时生效', '按站点控制', '完整设置'],
+          state: 'default',
+        },
+        site:
+        {
+          eyebrow: '按站点控制',
+          title: '只关闭一个网站，其他网页照常运行。',
+          description: '仅为当前 origin 保存禁用规则，随时可以重新启用，不读取网页内容。',
+          features: ['仅保存 origin', '随时恢复', '不读取网页正文'],
+          state: 'site-off',
+        },
+        appearance:
+        {
+          eyebrow: '外观与性能',
+          title: '用一个预设统一外观与渲染。',
+          description: '先选择效果预设，再精细调整颜色、强度、大小、渲染与合成。',
+          features: ['贴近原版', '浅色背景优化', '高级自定义'],
+          state: 'options',
+        },
+      },
+    }[locale][scene];
+
+    document.documentElement.lang = chinese ? 'zh-CN' : 'en';
+    document.querySelector('#fan-label').textContent = chinese ? '非官方粉丝扩展' : 'Unofficial fan-made extension';
+    document.querySelector('#eyebrow').textContent = copy.eyebrow;
+    document.querySelector('#title').textContent = copy.title;
+    document.querySelector('#description').textContent = copy.description;
+    copy.features.forEach((text, index) =>
+    {
+      document.querySelector(`#feature-${index + 1}`).textContent = text;
+    });
+    const main = document.querySelector('.showcase-main');
+    const card = document.querySelector('.browser-card');
+    const frame = document.querySelector('#popup-frame');
+
+    if (copy.state === 'options')
+    {
+      main.classList.add('has-options');
+      card.classList.add('options-card');
+      frame.classList.add('options-frame');
+      frame.title = 'BA Click FX full settings';
+      frame.src = `options-preview.html?lang=${locale}`;
+    }
+    else
+    {
+      frame.src = `popup-preview.html?lang=${locale}&state=${copy.state}`;
+    }
+  </script>
+</body>
+</html>

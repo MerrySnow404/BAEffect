@@ -1,0 +1,27 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BA Click FX Popup Preview</title>
+</head>
+<body>
+  <script>
+    fetch('../../dist/popup/popup.html')
+      .then((response) => response.text())
+      .then((html) =>
+      {
+        const previewHtml = html
+          .replace('href="popup.css"', 'href="../../dist/popup/popup.css"')
+          .replace(
+            '<script src="popup.js"><\/script>',
+            '<script src="popup-mock.js"><\/script><script src="../../dist/popup/popup.js"><\/script>',
+          );
+
+        document.open();
+        document.write(previewHtml);
+        document.close();
+      });
+  </script>
+</body>
+</html>

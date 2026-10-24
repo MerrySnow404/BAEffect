@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="aui-font-mode" content="web">
+    <meta name="aui-viewport" content="mode=browser,zoom=1,min-zoom=0.75,max-zoom=2,zoom-step=0.1,user-scalable=true">
+    <meta name="aui-mouse-events" content="intercept">
+    <link rel="stylesheet" href="/baeffect/settings.css">
+</head>
+<body style="transform: translateZ(-1000px);">
+<span id="fx-root" style="display:none" data-config="" data-revision="" data-patch="" data-close="" data-js=""></span>
+
+<main id="fx-page">
+    <header class="head">
+        <b>BA Click FX</b>
+        <small>Github源项目：ba-click-fx</small>
+        <small>拖尾/点击特效参数</small>
+    </header>
+
+    <section class="card">
+        <h3>指针</h3>
+        <div class="row"><span class="lbl">替换鼠标指针样式</span><input type="checkbox" class="chk" data-key="cursorEnabled"></div>
+    </section>
+
+    <section class="card">
+        <h3>外观与性能</h3>
+        <div class="row"><span class="lbl">启用特效</span><input type="checkbox" class="chk" data-key="enabled"></div>
+        <div class="row">
+            <span class="lbl">主题颜色</span>
+            <span class="val" data-out="color">
+                <button type="button" class="col" data-key="color" data-color-swatch="1"
+                        style="width:46px;height:18px;padding:0;border:1px solid #9fc4dd;border-radius:3px;background:#4ca7ff;cursor:pointer;"></button>
+            </span>
+        </div>
+        <div class="row"><span class="lbl">不透明度</span><input type="range" class="sld" data-key="opacity" min="0" max="1" step="0.01"><span class="val" data-out="opacity"></span></div>
+        <div class="row"><span class="lbl">特效大小</span><input type="range" class="sld" data-key="scale" min="0.2" max="3" step="0.05"><span class="val" data-out="scale"></span></div>
+        <div class="row"><span class="lbl">最大 DPR</span><input type="range" class="sld" data-key="maxDpr" min="1" max="3" step="0.1"><span class="val" data-out="maxDpr"></span></div>
+        <div class="row"><span class="lbl">覆盖层 Alpha 上限</span><input type="range" class="sld" data-key="overlayAlphaLimit" min="0" max="1" step="0.01"><span class="val" data-out="overlayAlphaLimit"></span></div>
+        <div class="row"><span class="lbl">原生辉光</span><input type="checkbox" class="chk" data-key="bloom"></div>
+        <div class="row"><span class="lbl">效果预设</span><select class="sel" data-key="preset"><option value="classic">贴近原版</option><option value="light-background">浅色背景优化</option><option value="soft">柔和</option><option value="performance">省电</option><option value="custom">自定义</option></select></div>
+        <div class="row"><span class="lbl">宿主混合</span><select class="sel" data-key="compositing"><option value="add">DOM Add</option><option value="normal">Source-over</option></select></div>
+    </section>
+
+    <section class="card">
+        <h3>点击特效</h3>
+        <div class="row"><span class="lbl">点击特效</span><input type="checkbox" class="chk" data-key="clickEnabled"></div>
+        <div class="row"><span class="lbl">特效样式</span><select class="sel" id="sel-fxStyle" data-key="fxStyle" data-kind="select"><option value="baeffect">BAEffect</option><option value="phira">Phira 资源包</option></select><span class="val" data-out="fxStyle"></span></div>
+        <div class="row" id="phira-row"><span class="lbl">Phira 资源包</span><select class="sel" id="sel-phiraRespack" data-key="phiraRespack" data-kind="select"><option value="">（未加载）</option></select><span class="val" data-out="phiraRespack"></span></div>
+        <div class="row" id="phira-only-tip"><small>请注意，如果Phira 资源包点击特效显示出现闪烁的白底，多点击几下就恢复正常啦~</small></div>
+        <div class="row" id="phira-only-tint"><span class="lbl">贴图按主题色着色</span><input type="checkbox" class="chk" data-key="phiraTint"></div>
+        <div class="row" id="phira-only-scale"><span class="lbl">贴图放大倍率</span><input type="range" class="sld" data-key="phiraScale" min="1" max="5" step="0.1"><span class="val" data-out="phiraScale"></span></div>
+        <div class="row" id="phira-only-sound"><span class="lbl">播放打击音效</span><input type="checkbox" class="chk" data-key="phiraSound"></div>
+        <div class="row" id="phira-only-progress"><span class="lbl">加载进度</span><span class="bar-track"><span class="bar-fill" id="fx-progress-fill"></span></span><span class="val" data-out="phiraProgress"></span></div>
+        <div class="info-row" id="phira-only-info"><span class="lbl">资源包信息</span><span class="info-text" id="phira-info"></span></div>
+        <div class="row"><span class="lbl">点击时间倍率</span><input type="range" class="sld" data-key="clickTimeScale" min="0.1" max="4" step="0.05"><span class="val" data-out="clickTimeScale"></span></div>
+    </section>
+
+    <section class="card" id="card-rotation">
+        <h3>旋转</h3>
+        <div class="row"><span class="lbl">启用旋转</span><input type="checkbox" class="chk" data-key="rotationEnabled"></div>
+        <div class="row"><span class="lbl">旋转速度（度/秒）</span><input type="range" class="sld" data-key="rotationSpeed" min="0" max="1440" step="10"><span class="val" data-out="rotationSpeed"></span></div>
+    </section>
+
+    <section class="card">
+        <h3>拖尾轨迹</h3>
+        <div class="row"><span class="lbl">光标拖尾</span><input type="checkbox" class="chk" data-key="trailEnabled"></div>
+        <div class="row"><span class="lbl">移动时始终显示</span><input type="checkbox" class="chk" data-key="trailAlways"></div>
+        <div class="row"><span class="lbl">动态效果偏好</span><select class="sel" data-key="motionMode"><option value="system">跟随系统</option><option value="full">完整动态</option><option value="reduced">减少持续动态</option></select></div>
+        <div class="row"><span class="lbl">轨迹时间倍率</span><input type="range" class="sld" data-key="trailTimeScale" min="0.1" max="4" step="0.05"><span class="val" data-out="trailTimeScale"></span></div>
+    </section>
+
+    <section class="card ba-only" id="card-hit">
+        <h3>Hit / Flare</h3>
+        <div class="row"><span class="lbl">启用 Hit</span><input type="checkbox" class="chk" data-key="hit.enabled"></div>
+        <div class="row"><span class="lbl">Hit 寿命</span><input type="range" class="sld" data-key="hit.lifetimeMs" min="20" max="200" step="1"><span class="val" data-out="hit.lifetimeMs"></span></div>
+        <div class="row"><span class="lbl">Hit 半径</span><input type="range" class="sld" data-key="hit.radius" min="10" max="60" step="0.1"><span class="val" data-out="hit.radius"></span></div>
+        <div class="row"><span class="lbl">启用 Flare</span><input type="checkbox" class="chk" data-key="flare.enabled"></div>
+        <div class="row"><span class="lbl">Flare 寿命</span><input type="range" class="sld" data-key="flare.lifetimeMs" min="50" max="300" step="1"><span class="val" data-out="flare.lifetimeMs"></span></div>
+        <div class="row"><span class="lbl">Flare 半径</span><input type="range" class="sld" data-key="flare.radius" min="10" max="80" step="0.1"><span class="val" data-out="flare.radius"></span></div>
+        <div class="row"><span class="lbl">Flare 射线数量</span><input type="range" class="sld" data-key="flare.rayCount" min="3" max="12" step="1"><span class="val" data-out="flare.rayCount"></span></div>
+    </section>
+
+    <section class="card ba-only" id="card-disk">
+        <h3>中心光盘</h3>
+        <div class="row"><span class="lbl">光盘寿命</span><input type="range" class="sld" data-key="disk.lifetimeMs" min="50" max="500" step="1"><span class="val" data-out="disk.lifetimeMs"></span></div>
+        <div class="row"><span class="lbl">光盘半径</span><input type="range" class="sld" data-key="disk.radius" min="20" max="120" step="0.1"><span class="val" data-out="disk.radius"></span></div>
+    </section>
+
+    <section class="card ba-only" id="card-rings">
+        <h3>点击圆环</h3>
+        <div class="row"><span class="lbl">圆环数量</span><input type="range" class="sld" data-key="rings.count" min="0" max="6" step="1"><span class="val" data-out="rings.count"></span></div>
+        <div class="row"><span class="lbl">圆环寿命</span><input type="range" class="sld" data-key="rings.lifetimeMs" min="50" max="2000" step="1"><span class="val" data-out="rings.lifetimeMs"></span></div>
+        <div class="row"><span class="lbl">圆环最小半径</span><input type="range" class="sld" data-key="rings.radiusMin" min="20" max="120" step="0.1"><span class="val" data-out="rings.radiusMin"></span></div>
+        <div class="row"><span class="lbl">圆环最大半径</span><input type="range" class="sld" data-key="rings.radiusMax" min="20" max="120" step="0.1"><span class="val" data-out="rings.radiusMax"></span></div>
+        <div class="row"><span class="lbl">环带比例</span><input type="range" class="sld" data-key="rings.bandToOuterRadius" min="0.01" max="0.2" step="0.001"><span class="val" data-out="rings.bandToOuterRadius"></span></div>
+        <div class="row"><span class="lbl">起始宽度倍率</span><input type="range" class="sld" data-key="rings.widthStart" min="0.25" max="2" step="0.01"><span class="val" data-out="rings.widthStart"></span></div>
+        <div class="row"><span class="lbl">终止宽度倍率</span><input type="range" class="sld" data-key="rings.widthEnd" min="0.25" max="2" step="0.01"><span class="val" data-out="rings.widthEnd"></span></div>
+        <div class="row"><span class="lbl">旋转速度倍率</span><input type="range" class="sld" data-key="rings.angularVelocityMultiplier" min="1" max="30" step="0.1"><span class="val" data-out="rings.angularVelocityMultiplier"></span></div>
+        <div class="row"><span class="lbl">旋转方向</span><select class="sel" data-key="rings.rotationDirection"><option value="-1">逆时针</option><option value="1">顺时针</option></select></div>
+        <div class="row"><span class="lbl">HDR 强度</span><input type="range" class="sld" data-key="rings.hdrIntensity" min="0" max="8" step="0.01"><span class="val" data-out="rings.hdrIntensity"></span></div>
+        <div class="row"><span class="lbl">圆弧采样数</span><input type="range" class="sld" data-key="rings.arcSamples" min="24" max="192" step="1"><span class="val" data-out="rings.arcSamples"></span></div>
+        <div class="row"><span class="lbl">径向采样数</span><input type="range" class="sld" data-key="rings.radialSamples" min="1" max="16" step="1"><span class="val" data-out="rings.radialSamples"></span></div>
+        <div class="row"><span class="lbl">溶解方向</span><select class="sel" data-key="rings.dissolveDirection"><option value="1">正方向</option><option value="-1">反方向</option></select></div>
+    </section>
+
+    <section class="card ba-only" id="card-shards">
+        <h3>三角碎片</h3>
+        <div class="row"><span class="lbl">碎片 HDR 强度</span><input type="range" class="sld" data-key="shards.hdrIntensity" min="0" max="8" step="0.01"><span class="val" data-out="shards.hdrIntensity"></span></div>
+        <div class="row"><span class="lbl">点击碎片数量</span><input type="range" class="sld" data-key="shards.clickCount" min="0" max="12" step="1"><span class="val" data-out="shards.clickCount"></span></div>
+        <div class="row"><span class="lbl">点击碎片最短寿命</span><input type="range" class="sld" data-key="shards.clickLifetimeMinMs" min="100" max="1000" step="1"><span class="val" data-out="shards.clickLifetimeMinMs"></span></div>
+        <div class="row"><span class="lbl">点击碎片最长寿命</span><input type="range" class="sld" data-key="shards.clickLifetimeMaxMs" min="100" max="1000" step="1"><span class="val" data-out="shards.clickLifetimeMaxMs"></span></div>
+        <div class="row"><span class="lbl">点击碎片生成半径</span><input type="range" class="sld" data-key="shards.clickRadius" min="0" max="200" step="0.1"><span class="val" data-out="shards.clickRadius"></span></div>
+        <div class="row"><span class="lbl">点击碎片最小速度</span><input type="range" class="sld" data-key="shards.clickSpeedMin" min="0" max="200" step="0.1"><span class="val" data-out="shards.clickSpeedMin"></span></div>
+        <div class="row"><span class="lbl">点击碎片最大速度</span><input type="range" class="sld" data-key="shards.clickSpeedMax" min="0" max="200" step="0.1"><span class="val" data-out="shards.clickSpeedMax"></span></div>
+        <div class="row"><span class="lbl">碎片圆角</span><input type="range" class="sld" data-key="shards.roundness" min="0" max="1" step="0.01"><span class="val" data-out="shards.roundness"></span></div>
+        <div class="row"><span class="lbl">轨迹碎片最短寿命</span><input type="range" class="sld" data-key="shards.trailLifetimeMinMs" min="50" max="500" step="1"><span class="val" data-out="shards.trailLifetimeMinMs"></span></div>
+        <div class="row"><span class="lbl">轨迹碎片最长寿命</span><input type="range" class="sld" data-key="shards.trailLifetimeMaxMs" min="50" max="500" step="1"><span class="val" data-out="shards.trailLifetimeMaxMs"></span></div>
+        <div class="row"><span class="lbl">轨迹碎片生成半径</span><input type="range" class="sld" data-key="shards.trailRadius" min="0" max="100" step="0.1"><span class="val" data-out="shards.trailRadius"></span></div>
+        <div class="row"><span class="lbl">轨迹碎片最小速度</span><input type="range" class="sld" data-key="shards.trailSpeedMin" min="0" max="150" step="0.1"><span class="val" data-out="shards.trailSpeedMin"></span></div>
+        <div class="row"><span class="lbl">轨迹碎片最大速度</span><input type="range" class="sld" data-key="shards.trailSpeedMax" min="0" max="150" step="0.1"><span class="val" data-out="shards.trailSpeedMax"></span></div>
+        <div class="row"><span class="lbl">碎片最小尺寸</span><input type="range" class="sld" data-key="shards.sizeMin" min="0" max="100" step="0.1"><span class="val" data-out="shards.sizeMin"></span></div>
+        <div class="row"><span class="lbl">碎片最大尺寸</span><input type="range" class="sld" data-key="shards.sizeMax" min="0" max="100" step="0.1"><span class="val" data-out="shards.sizeMax"></span></div>
+        <div class="row"><span class="lbl">轨迹碎片间距</span><input type="range" class="sld" data-key="shards.trailSpacing" min="10" max="500" step="1"><span class="val" data-out="shards.trailSpacing"></span></div>
+        <div class="row"><span class="lbl">碎片数量上限</span><input type="range" class="sld" data-key="shards.maxCount" min="0" max="500" step="1"><span class="val" data-out="shards.maxCount"></span></div>
+    </section>
+
+    <section class="card ba-only" id="card-trail">
+        <h3>轨迹</h3>
+        <div class="row"><span class="lbl">轨迹寿命</span><input type="range" class="sld" data-key="trail.lifetimeMs" min="50" max="2000" step="1"><span class="val" data-out="trail.lifetimeMs"></span></div>
+        <div class="row"><span class="lbl">轨迹可见宽度</span><input type="range" class="sld" data-key="trail.width" min="1" max="25" step="0.1"><span class="val" data-out="trail.width"></span></div>
+        <div class="row"><span class="lbl">轨迹几何带宽</span><input type="range" class="sld" data-key="trail.geometryWidth" min="1" max="8" step="0.1"><span class="val" data-out="trail.geometryWidth"></span></div>
+        <div class="row"><span class="lbl">轨迹最小顶点间距</span><input type="range" class="sld" data-key="trail.minVertexDistance" min="1" max="20" step="0.1"><span class="val" data-out="trail.minVertexDistance"></span></div>
+        <div class="row"><span class="lbl">轨迹外发光宽度</span><input type="range" class="sld" data-key="trail.outerGlowWidth" min="1" max="40" step="0.5"><span class="val" data-out="trail.outerGlowWidth"></span></div>
+        <div class="row"><span class="lbl">轨迹整体透明度</span><input type="range" class="sld" data-key="trail.trailOpacity" min="0" max="1" step="0.01"><span class="val" data-out="trail.trailOpacity"></span></div>
+        <div class="row"><span class="lbl">轨迹圆角顶点数</span><input type="range" class="sld" data-key="trail.numCornerVertices" min="0" max="12" step="1"><span class="val" data-out="trail.numCornerVertices"></span></div>
+        <div class="row"><span class="lbl">轨迹端帽顶点数</span><input type="range" class="sld" data-key="trail.numCapVertices" min="0" max="6" step="1"><span class="val" data-out="trail.numCapVertices"></span></div>
+    </section>
+
+    <section class="card ba-only" id="card-bloom">
+        <h3>Bloom</h3>
+        <div class="row"><span class="lbl">Bloom 强度</span><input type="range" class="sld" data-key="bloom.intensity" min="0" max="2" step="0.01"><span class="val" data-out="bloom.intensity"></span></div>
+        <div class="row"><span class="lbl">原生圆环模糊</span><input type="range" class="sld" data-key="bloom.ringBlur" min="0" max="200" step="1"><span class="val" data-out="bloom.ringBlur"></span></div>
+        <div class="row"><span class="lbl">原生圆环辉光透明度</span><input type="range" class="sld" data-key="bloom.ringAlpha" min="0" max="1" step="0.01"><span class="val" data-out="bloom.ringAlpha"></span></div>
+        <div class="row"><span class="lbl">原生光盘模糊</span><input type="range" class="sld" data-key="bloom.diskBlur" min="0" max="200" step="1"><span class="val" data-out="bloom.diskBlur"></span></div>
+        <div class="row"><span class="lbl">原生光盘辉光透明度</span><input type="range" class="sld" data-key="bloom.diskAlpha" min="0" max="1" step="0.01"><span class="val" data-out="bloom.diskAlpha"></span></div>
+        <div class="row"><span class="lbl">原生轨迹辉光透明度</span><input type="range" class="sld" data-key="bloom.trailAlpha" min="0" max="1" step="0.01"><span class="val" data-out="bloom.trailAlpha"></span></div>
+    </section>
+</main>
+
+<div id="fx-actions">
+    <button class="btn btn-primary" id="fx-save"  type="button">保存</button>
+    <button class="btn"             id="fx-reset" type="button">重制配置</button>
+    <button class="btn"             id="fx-close" type="button">关闭</button>
+</div>
+
+<div id="fx-status"></div>
+</body>
+</html>
