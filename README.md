@@ -1,6 +1,6 @@
 # [BAE]蓝白光标特效BAEffect
-[![CurseForge Game Versions](https://img.shields.io/curseforge/game-versions/1521891?style=for-the-badge&logo=educative&logoColor=%23F16436&label=For%20MiaoCraft%20Version)](https://www.curseforge.com/minecraft/mc-mods/chinese-weapons)
-[![CurseForge Downloads](https://img.shields.io/curseforge/dt/1521891?style=for-the-badge&logo=curseforge&logoColor=%23F16436&label=curseforge%20miaomiao%20ovo)](https://www.curseforge.com/minecraft/mc-mods/chinese-weapons)
+[![CurseForge Game Versions](https://img.shields.io/curseforge/game-versions/1521891?style=for-the-badge&logo=educative&logoColor=%23F16436&label=For%20MiaoCraft%20Version)](https://www.curseforge.com/minecraft/mc-mods/baeffect)
+[![CurseForge Downloads](https://img.shields.io/curseforge/dt/1521891?style=for-the-badge&logo=curseforge&logoColor=%23F16436&label=curseforge%20miaomiao%20ovo)](https://www.curseforge.com/minecraft/mc-mods/baeffect)
 
 ---
 ## 授权许可
@@ -21,7 +21,7 @@
 SRG 名称）构建的——这意味着你将无法直接对照
 普通代码来阅读它们。
 
-安装流程：
+安装流程
 ==============================
 
 第 1 步：打开命令行并浏览到你解压 zip 文件的文件夹。
@@ -42,7 +42,7 @@ SRG 名称）构建的——这意味着你将无法直接对照
 运行 `gradlew --refresh-dependencies` 来刷新本地缓存。运行 `gradlew clean` 来重置一切
 （这不会影响你的代码），然后重新开始该流程。
 
-映射名称：
+映射名称
 =============================
 默认情况下，MDK 配置为使用 Mojang 官方映射名称来表示 Minecraft 代码库中的
 方法和字段。这些名称受特定许可证保护。所有模组开发者都应了解此
