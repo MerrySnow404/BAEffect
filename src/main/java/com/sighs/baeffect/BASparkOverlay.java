@@ -585,7 +585,6 @@ final class BAClickFxOverlay {
     private static long phiraLayerLogged;
 
     private static void renderRings(CanvasRenderingContext2D context, double unit) {
-        boolean bloom = Baeffect.flag("bloom");
         double intensity = Math.min(8.0D, Baeffect.num("rings.hdrIntensity")) / 8.0D;
         double band = Baeffect.num("rings.bandToOuterRadius");
         double widthStart = Baeffect.num("rings.widthStart");
@@ -608,32 +607,9 @@ final class BAClickFxOverlay {
             double circumference = TAU * radius;
             int samples = (int) Math.max(32.0D, Math.max(Math.ceil(circumference), arcSamples));
 
-            double ringGlowAlpha = alpha * 0.18D * bloomGain()
-                    * Math.max(0.0D, Baeffect.num("bloom.ringAlpha")) * 2.6D;
-
             context.save();
             context.translate(ring.x, ring.y);
             context.rotate(ring.angle);
-
-            if (bloom && ringGlowAlpha > 0.004D) {
-                context.beginPath();
-                context.arc(0.0D, 0.0D, radius, 0.0D, TAU, false);
-                context.setLineWidth(Math.max(1.0D, width) * 4.2D);
-                context.setStrokeStyle(rgba(themeColor(), ringGlowAlpha * 0.22D));
-                context.stroke();
-
-                context.beginPath();
-                context.arc(0.0D, 0.0D, radius, 0.0D, TAU, false);
-                context.setLineWidth(Math.max(1.0D, width) * 2.6D);
-                context.setStrokeStyle(rgba(themeColor(), ringGlowAlpha * 0.45D));
-                context.stroke();
-
-                context.beginPath();
-                context.arc(0.0D, 0.0D, radius, 0.0D, TAU, false);
-                context.setLineWidth(Math.max(1.0D, width) * 1.6D);
-                context.setStrokeStyle(rgba(themeColor(), ringGlowAlpha));
-                context.stroke();
-            }
 
             for (int index = 0; index < samples; index++) {
                 double start = (double) index / samples;
