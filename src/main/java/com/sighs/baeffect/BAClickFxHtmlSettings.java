@@ -25,6 +25,8 @@ public final class BAClickFxHtmlSettings {
     };
 
     private static Screen hostScreen;
+    /** 打开设置前所在的界面，关闭设置后回到这里。 */
+    private static Screen returnScreen;
     private static int pushedRevision = -1;
     private static boolean loggedElements;
     private static String colorPickerOpeningKey = null;
@@ -47,9 +49,23 @@ public final class BAClickFxHtmlSettings {
         });
     }
 
+    /** 打开设置页；已打开时保持现状。 */
+    public static void open() {
+        Minecraft.getInstance().execute(() -> {
+            if (!isOpen()) {
+                openOnClient();
+            }
+        });
+    }
+
     private static void openOnClient() {
-        closeOnClient();
         Minecraft minecraft = Minecraft.getInstance();
+        Screen previous = minecraft.screen;
+        Screen inherited = returnScreen;
+        boolean reopen = previous != null && previous == hostScreen;
+        closeOnClient();
+        // 记录来源界面；若本身就在设置页里重开，则保留原来的来源。
+        returnScreen = reopen ? inherited : previous;
 
         for (String className : SCREEN_CLASSES) {
             try {
@@ -75,8 +91,10 @@ public final class BAClickFxHtmlSettings {
             }
         }
         Minecraft minecraft = Minecraft.getInstance();
+        Screen target = returnScreen;
+        returnScreen = null;
         if (hostScreen != null && minecraft.screen == hostScreen) {
-            minecraft.setScreen(null);
+            minecraft.setScreen(target);
         }
         hostScreen = null;
         pushedRevision = -1;
@@ -114,6 +132,12 @@ public final class BAClickFxHtmlSettings {
             pushedRevision = -1;
             loggedElements = false;
             colorPickerOpeningKey = null;
+            // 通过 ESC 等方式关闭时也回到来源界面。
+            Screen target = returnScreen;
+            returnScreen = null;
+            if (target != null && minecraft.screen == null) {
+                minecraft.setScreen(target);
+            }
             return;
         }
 

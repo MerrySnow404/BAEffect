@@ -4,9 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.sighs.apricityui.init.Document;
 import net.minecraft.client.Minecraft;
-import net.minecraft.commands.Commands;
 import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
@@ -422,19 +420,6 @@ public final class Baeffect {
 
     public static final class ClientEvents {
         private ClientEvents() {
-        }
-
-        @SubscribeEvent
-        public static void onRegisterClientCommands(RegisterClientCommandsEvent event) {
-            if (event.getDispatcher().getRoot().getChild("baeffect") != null) {
-                return;
-            }
-
-            event.getDispatcher().register(Commands.literal("baeffect")
-                    .executes(context -> {
-                        Minecraft.getInstance().execute(BAClickFxHtmlSettings::toggle);
-                        return 1;
-                    }));
         }
 
         @SubscribeEvent

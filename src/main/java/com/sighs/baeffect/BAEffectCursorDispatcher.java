@@ -73,6 +73,11 @@ public final class BAEffectCursorDispatcher {
             return BAEffectCursorController.CursorStyle.LINK;
         }
 
+        var mouse = Client.getMousePositionDirectly();
+        if (mouse != null && BAEffectSettingsShortcut.isHovered(screen, mouse.x, mouse.y)) {
+            return BAEffectCursorController.CursorStyle.LINK;
+        }
+
         GuiEventListener hovered = findHovered(screen);
         if (hovered instanceof EditBox) {
             return BAEffectCursorController.CursorStyle.TEXT;
