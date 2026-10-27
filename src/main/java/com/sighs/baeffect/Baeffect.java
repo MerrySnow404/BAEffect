@@ -266,6 +266,7 @@ public final class Baeffect {
         clamp01("bloom.trailAlpha");
         clamp01("trailGlowOpacity");
         clamp("trailGlowWidth", 1.0D, 60.0D);
+        clamp("trailGlowDpr", 1.0D, 4.0D);
         clamp01("overlayAlphaLimit");
 
         clamp("scale", 0.01D, 5.0D);
@@ -397,8 +398,10 @@ public final class Baeffect {
         // 轨迹
         defaults.put("trail.lifetimeMs", 300.0D);
         defaults.put("trailGlowMode", "medium");
-        defaults.put("trailGlowOpacity", 0.04D);
-        defaults.put("trailGlowWidth", 22.5D);
+        defaults.put("trailGlowOpacity", 0.17D);
+        defaults.put("trailGlowWidth", 32.5D);
+        defaults.put("trailGlowDpr", 2.0D);
+        defaults.put("themeMode", "light");
         defaults.put("trail.width", 2.7D);
         defaults.put("trail.geometryWidth", 2.7D);
         defaults.put("trail.minVertexDistance", 5.4D);

@@ -2,7 +2,6 @@ package com.sighs.baeffect;
 
 import com.sighs.apricityui.init.Document;
 import com.sighs.apricityui.init.Element;
-import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraftforge.event.TickEvent;
@@ -26,15 +25,12 @@ public final class BAClickFxHtmlSettings {
     };
 
     private static Screen hostScreen;
-    /** 打开设置前所在的界面，关闭设置后回到这里。 */
+    /** 打开设置前所在的界面，关闭设置后回到这里 */
     private static Screen returnScreen;
     private static int pushedRevision = -1;
     private static boolean loggedElements;
     private static String colorPickerOpeningKey = null;
     private static String lastPhiraSignature = null;
-    /** 正在被拖动的主题滑块（.slider），null 表示未拖动。 */
-    private static Element draggedSlider;
-    private static String draggedSliderKey;
 
     private BAClickFxHtmlSettings() {
     }
@@ -53,7 +49,7 @@ public final class BAClickFxHtmlSettings {
         });
     }
 
-    /** 打开设置页；已打开时保持现状。 */
+    /** 打开设置页；已打开时保持现状 */
     public static void open() {
         Minecraft.getInstance().execute(() -> {
             if (!isOpen()) {
@@ -68,7 +64,7 @@ public final class BAClickFxHtmlSettings {
         Screen inherited = returnScreen;
         boolean reopen = previous != null && previous == hostScreen;
         closeOnClient();
-        // 记录来源界面；若本身就在设置页里重开，则保留原来的来源。
+        // 记录来源界面；若本身就在设置页里重开，则保留原来的来源
         returnScreen = reopen ? inherited : previous;
 
         for (String className : SCREEN_CLASSES) {
@@ -104,8 +100,6 @@ public final class BAClickFxHtmlSettings {
         pushedRevision = -1;
         loggedElements = false;
         colorPickerOpeningKey = null;
-        draggedSlider = null;
-        draggedSliderKey = null;
         lastPhiraSignature = null;
         loadingPackId = null;
         lastStatusMessage = null;
@@ -138,9 +132,7 @@ public final class BAClickFxHtmlSettings {
             pushedRevision = -1;
             loggedElements = false;
             colorPickerOpeningKey = null;
-            draggedSlider = null;
-            draggedSliderKey = null;
-            // 通过 ESC 等方式关闭时也回到来源界面。
+            // 通过 ESC 等方式关闭时也回到来源界面
             Screen target = returnScreen;
             returnScreen = null;
             if (target != null && minecraft.screen == null) {
@@ -172,6 +164,7 @@ public final class BAClickFxHtmlSettings {
             lastStatusMessage = null;
             pushedRevision = -1;
             push(document, controls);
+            applyTheme(document);
             updatePhiraStatus(document);
             return;
         }
@@ -179,9 +172,9 @@ public final class BAClickFxHtmlSettings {
         if (Baeffect.revision() != pushedRevision) {
             pushedRevision = Baeffect.revision();
             push(document, controls);
+            applyTheme(document);
         }
         pullControlState(controls);
-        tickSliderRelease();
         updatePhiraStatus(document);
 
         Element root = document.getElementById("fx-root");
@@ -224,9 +217,6 @@ public final class BAClickFxHtmlSettings {
             String type = element.getAttribute("type");
             boolean isSelect = isSelect(element);
 
-            // 开关与滑块由 Java 直接驱动，页面自身不产生可回读的值。
-            if (isSwitch(element) || isSlider(element)) continue;
-
             if ("checkbox".equalsIgnoreCase(type)) {
                 boolean page = element.isChecked();
                 Boolean last = LAST_SEEN_CHECKED.get(key);
@@ -244,17 +234,36 @@ public final class BAClickFxHtmlSettings {
 
             if (isSelect) {
                 String page = element.getValue();
-                if (page == null) continue;
+                if (page == null || page.isEmpty()) continue;
                 String last = LAST_SEEN_SELECT.get(key);
                 if (last == null) {
                     LAST_SEEN_SELECT.put(key, page);
                 } else if (!page.equals(last)) {
                     LAST_SEEN_SELECT.put(key, page);
-                    if ("preset".equals(key)) {
-                        Baeffect.applyPreset(page);
-                        pushedRevision = -1;
-                    } else if (!page.equals(Baeffect.text(key))) {
-                        Baeffect.applyPatch(Map.<String, Object>of(key, page));
+                    Object current = Baeffect.value(key);
+                    boolean same;
+                    if (current instanceof Number number) {
+                        try {
+                            same = Math.abs(Double.parseDouble(page.trim()) - number.doubleValue()) < 1.0E-6D;
+                        } catch (NumberFormatException ignored) {
+                            same = false;
+                        }
+                    } else {
+                        same = page.equals(String.valueOf(current));
+                    }
+                    if (!same) {
+                        // 数值型下拉写回数值，避免配置里出现字符串
+                        if (current instanceof Number) {
+                            double parsed;
+                            try {
+                                parsed = Double.parseDouble(page.trim());
+                            } catch (NumberFormatException ignored) {
+                                continue;
+                            }
+                            Baeffect.applyPatch(Map.<String, Object>of(key, parsed));
+                        } else {
+                            Baeffect.applyPatch(Map.<String, Object>of(key, page));
+                        }
                         pushedRevision = -1;
                     }
                 }
@@ -285,8 +294,7 @@ public final class BAClickFxHtmlSettings {
         return true;
     }
 
-    private static List<Element> query(Document document, String selector) {
-        for (String name : new String[]{"querySelectorAll", "querySelectAll"}) {
+    private static List<Element> query(Document document, String selector) {        for (String name : new String[]{"querySelectorAll", "querySelectAll"}) {
             try {
                 Object value = document.getClass().getMethod(name, String.class).invoke(document, selector);
                 if (value instanceof List<?> list) {
@@ -304,48 +312,22 @@ public final class BAClickFxHtmlSettings {
     }
 
     private static Document eventDocument;
-    private static boolean sliderDragBound;
 
     private static void bindPageEvents(Document document) {
         if (eventDocument == document) return;
         eventDocument = document;
-        sliderDragBound = false;
 
         bindButton(document, "fx-save", "save");
         bindButton(document, "fx-reset", "reset");
         bindButton(document, "fx-close", "close");
-        bindSliderDrag(document);
+        bindButton(document, "fx-theme", "theme");
 
         List<Element> controls = query(document, "[data-key]");
         for (Element element : controls) {
             String key = element.getAttribute("data-key");
             if (key == null || key.isEmpty()) continue;
 
-            if (isSwitch(element)) {
-                if ("1".equals(element.getAttribute("data-switch-bound"))) continue;
-                element.setAttribute("data-switch-bound", "1");
-                element.addEventListener("click", event -> {
-                    boolean value = !Baeffect.flag(key);
-                    Baeffect.applyPatch(Map.<String, Object>of(key, value));
-                    setSwitchState(element, value);
-                    pushedRevision = -1;
-                });
-                continue;
-            }
-
-            if (isSlider(element)) {
-                if ("1".equals(element.getAttribute("data-slider-bound"))) continue;
-                element.setAttribute("data-slider-bound", "1");
-                element.addEventListener("mousedown", event -> {
-                    draggedSlider = element;
-                    draggedSliderKey = key;
-                    if (event instanceof com.sighs.apricityui.event.MouseEvent mouse) {
-                        applySliderAt(element, key, mouse.clientX);
-                    } else {
-                        double[] bounds = rect(element);
-                        if (bounds != null) applySliderAt(element, key, bounds[0] + bounds[2] * 0.5D);
-                    }
-                });
+            if ("checkbox".equalsIgnoreCase(element.getAttribute("type"))) {
                 continue;
             }
 
@@ -392,6 +374,11 @@ public final class BAClickFxHtmlSettings {
         if (action.contains("save")) {
             Baeffect.save();
             setStatus(document, "已保存到 config/baeffect.toml");
+        } else if (action.contains("theme")) {
+            boolean dark = "dark".equalsIgnoreCase(Baeffect.text("themeMode"));
+            Baeffect.applyPatch(Map.<String, Object>of("themeMode", dark ? "light" : "dark"));
+            applyTheme(document);
+            setStatus(document, dark ? "已切换到浅色模式" : "已切换到深色模式");
         } else if (action.contains("reset")) {
             long now = System.currentTimeMillis();
             if (now - resetArmedAt > 5000L) {
@@ -408,6 +395,73 @@ public final class BAClickFxHtmlSettings {
             Baeffect.applyPatch(Baeffect.parsePatch(detail));
         }
         pushedRevision = -1;
+    }
+
+    @SubscribeEvent
+    public static void onMousePress(net.minecraftforge.client.event.ScreenEvent.MouseButtonPressed.Pre event) {
+        if (hostScreen == null || event.getScreen() != hostScreen || event.getButton() != 0) return;
+        Document document = document();
+        if (document == null) return;
+
+        double scale = renderScale(document);
+        double x = event.getMouseX() / Math.max(0.0001D, scale);
+        double y = event.getMouseY() / Math.max(0.0001D, scale);
+
+        List<Element> controls = query(document, "[data-key]");
+
+        for (Element element : controls) {
+            if (!hitsControl(element, x, y)) continue;
+            String key = element.getAttribute("data-key");
+            if (key == null || key.isEmpty()) continue;
+
+            String type = element.getAttribute("type");
+
+            if ("checkbox".equalsIgnoreCase(type)) {
+                boolean value = !Baeffect.flag(key);
+                Baeffect.applyPatch(Map.<String, Object>of(key, value));
+                syncChecked(element, value);
+                LAST_SEEN_CHECKED.put(key, value);
+                pushedRevision = -1;
+                event.setCanceled(true);
+                return;
+            }
+            if ("text".equalsIgnoreCase(type)) continue;
+            if ("1".equals(element.getAttribute("data-color-swatch"))) continue;
+
+            if (isSelect(element)) {
+                List<String> values = optionValues(element);
+                if (values.isEmpty()) continue;
+                String previous = element.getValue();
+                int index = values.indexOf(previous);
+                if (index < 0) index = 0;
+                int delta = x < centerX(element) ? -1 : 1;
+                int next = Math.floorMod(index + delta, values.size());
+                String value = values.get(next);
+                element.setValue(value);//re
+                if ("preset".equals(key)) {
+                    Baeffect.applyPreset(value);
+                } else {
+                    Baeffect.applyPatch(Map.<String, Object>of(key, value));
+                }
+                pushedRevision = -1;
+                event.setCanceled(true);
+                return;
+            }
+
+            if ("range".equalsIgnoreCase(type)) continue;
+
+            double step = doubleAttribute(element, "step", 1.0D);
+            double delta = step * (x < centerX(element) ? -1 : 1);
+            double value = Baeffect.num(key) + delta;
+            double min = doubleAttribute(element, "min", Double.NEGATIVE_INFINITY);
+            double max = doubleAttribute(element, "max", Double.POSITIVE_INFINITY);
+            value = Math.max(min, Math.min(max, value));
+            element.setValue(round(value));
+            Baeffect.applyPatch(Map.<String, Object>of(key, value));
+            pushedRevision = -1;
+            event.setCanceled(true);
+            return;
+        }
     }
 
     private static void openColorPicker(Document document, Element anchor, String key) {
@@ -457,19 +511,58 @@ public final class BAClickFxHtmlSettings {
     }
 
     private static String swatchStyle(String color) {
-        return "width:46px;height:18px;padding:0;border:2px solid var(--edge, #1e1e1f);"
-                + "background:" + color + ";cursor:pointer;";
+        return "width:46px;height:18px;padding:0;border:1px solid #9fc4dd;"
+                + "border-radius:3px;background:" + color + ";cursor:pointer;";
     }
 
+    private static List<String> optionValues(Element select) {
+        List<String> values = new ArrayList<>();
+        for (Element child : select.children) {
+            String value = child.getAttribute("value");
+            if (value != null && !value.isEmpty()) values.add(value);
+        }
+        return values;
+    }
 
     private static void setStatus(Document document, String text) {
         Element status = document.getElementById("fx-status");
         if (status != null) status.setTextContent(text);
     }
 
+    private static boolean hitsControl(Element element, double x, double y) {
+        if (inRect(element, x, y)) return true;
+        Element row = element.parentElement;
+        for (int guard = 0; row != null && guard < 3; guard++) {
+            double[] parentRect = rect(row);
+            if (parentRect != null && parentRect[2] > 1.0D && parentRect[3] > 1.0D) {
+                return x >= parentRect[0] && y >= parentRect[1]
+                        && x <= parentRect[0] + parentRect[2] && y <= parentRect[1] + parentRect[3];
+            }
+            row = row.parentElement;
+        }
+        return false;
+    }
 
+    private static double renderScale(Document document) {
+        try {
+            Object viewport = document.getClass().getMethod("getViewport").invoke(document);
+            if (viewport == null) return 1.0D;
+            Object scale = viewport.getClass().getMethod("renderScale").invoke(viewport);
+            return scale instanceof Number number ? number.doubleValue() : 1.0D;
+        } catch (Throwable ignored) {
+            return 1.0D;
+        }
+    }
 
+    private static boolean inRect(Element element, double x, double y) {
+        double[] rect = rect(element);
+        return rect != null && x >= rect[0] && y >= rect[1] && x <= rect[0] + rect[2] && y <= rect[1] + rect[3];
+    }
 
+    private static double centerX(Element element) {
+        double[] rect = rect(element);
+        return rect == null ? 0.0D : rect[0] + rect[2] / 2.0D;
+    }
 
     private static double[] rect(Element element) {
         try {
@@ -487,18 +580,7 @@ public final class BAClickFxHtmlSettings {
         }
     }
 
-    /**
-     * DOMRect 在部分 AUI 版本里是 public 字段（x/y/width/height），
-     * 另一些版本才提供同名 getter；两者都要兼容。
-     */
     private static double number(Class<?> type, Object target, String name) throws Exception {
-        try {
-            java.lang.reflect.Field field = type.getField(name);
-            Object value = field.get(target);
-            if (value instanceof Number number) return number.doubleValue();
-        } catch (NoSuchFieldException ignored) {
-            // 回退到 getter
-        }
         Object value = type.getMethod(name).invoke(target);
         return value instanceof Number number ? number.doubleValue() : 0.0D;
     }
@@ -513,6 +595,13 @@ public final class BAClickFxHtmlSettings {
         }
     }
 
+    private static void syncChecked(Element element, boolean value) {
+        if (value) {
+            element.setAttribute("checked", "checked");
+        } else {
+            element.removeAttribute("checked");
+        }
+    }
 
     private static void push(Document document, List<Element> controls) {
         for (Element element : controls) {
@@ -522,11 +611,7 @@ public final class BAClickFxHtmlSettings {
             Object raw = Baeffect.value(key);
             boolean isSelect = isSelect(element);
 
-            if (isSwitch(element)) {
-                setSwitchState(element, Baeffect.flag(key));
-            } else if (isSlider(element)) {
-                setSliderVisual(element, Baeffect.num(key));
-            } else if ("checkbox".equalsIgnoreCase(element.getAttribute("type"))) {
+            if ("checkbox".equalsIgnoreCase(element.getAttribute("type"))) {
                 boolean want = Baeffect.flag(key);
                 if (want != element.isChecked()) {
                     element.setChecked(want);
@@ -535,6 +620,12 @@ public final class BAClickFxHtmlSettings {
             } else if ("1".equals(element.getAttribute("data-color-swatch"))) {
                 String value = raw instanceof String string && !string.isEmpty() ? string : "#4ca7ff";
                 element.setAttribute("style", swatchStyle(value));
+            } else if (raw instanceof Number number && isSelect) {
+                String text = trimNumber(number.doubleValue());
+                if (!text.equals(element.getValue())) {
+                    element.setValue(text);
+                }
+                LAST_SEEN_SELECT.put(key, text);
             } else if (raw instanceof String string) {
                 if (isSelect) {
                     if (!string.equals(element.getValue())) {
@@ -551,10 +642,29 @@ public final class BAClickFxHtmlSettings {
             }
 
             Element out = document.getElementById("o-" + key);
+            if (out == null && key != null && !key.isEmpty()) {
+                out = findByDataOut(document, key);
+            }
             if (out != null) out.setTextContent(display(key));
         }
         syncPhiraOptions(document);
         syncPhiraRowVisibility(document);
+    }
+
+    private static Element findByDataOut(Document document, String key) {
+        for (String name : new String[]{"querySelectorAll", "querySelectAll"}) {
+            try {
+                Object value = document.getClass().getMethod(name, String.class)
+                        .invoke(document, "[data-out=\"" + key + "\"]");
+                if (!(value instanceof List<?> list)) continue;
+                for (Object item : list) {
+                    if (item instanceof Element element) return element;
+                }
+            } catch (Throwable ignored) {
+                //pass
+            }
+        }
+        return null;
     }
 
     private static void syncPhiraOptions(Document document) {
@@ -631,102 +741,60 @@ public final class BAClickFxHtmlSettings {
                 "card-hit", "card-disk", "card-rings", "card-shards", "card-trail", "card-bloom"}) {
             show(document, id, !phira, "block");
         }
+
+        String glowMode = Baeffect.text("trailGlowMode");
+        boolean glowVisible = !"off".equals(glowMode);
+        show(document, "trail-glow-width", glowVisible, "flex");
+        show(document, "trail-glow-opacity", glowVisible, "flex");
+        show(document, "trail-glow-dpr", glowVisible, "flex");
+
+        //预设
+        String signature = glowMode;
+        if (!signature.equals(lastGlowMode)) {
+            lastGlowMode = signature;
+            boolean changed = false;
+            if ("medium".equals(glowMode)) {
+                Baeffect.applyPatch(Map.<String, Object>of(
+                        "trailGlowOpacity", 0.21D, "trailGlowWidth", 21D));
+                changed = true;
+            } else if ("fine".equals(glowMode)) {
+                Baeffect.applyPatch(Map.<String, Object>of(
+                        "trailGlowOpacity", 0.27D, "trailGlowWidth", 40D));
+                changed = true;
+            }
+            if (changed) {
+                //刷新
+                pushedRevision = -1;
+                refreshOutputs(document);
+            }
+        }
     }
+
+    private static void refreshOutputs(Document document) {
+        for (Element node : query(document, "[data-out]")) {
+            String key = node.getAttribute("data-out");
+            if (key == null || key.isEmpty()) continue;
+            node.setTextContent(display(key));
+        }
+    }
+
+    private static String lastGlowMode = "";
 
     private static boolean isSelect(Element element) {
         return "SELECT".equalsIgnoreCase(element.tagName)
                 || "select".equalsIgnoreCase(element.getAttribute("data-kind"));
     }
 
-    private static boolean hasClass(Element element, String name) {
-        String classes = element.getAttribute("class");
-        if (classes == null) return false;
-        for (String token : classes.trim().split("\\s+")) {
-            if (token.equals(name)) return true;
+    private static void applyTheme(Document document) {
+        if (document == null) return;
+        boolean dark = "dark".equalsIgnoreCase(Baeffect.text("themeMode"));
+        if (document.body != null) {
+            document.body.setAttribute("class", dark ? "dark" : "");
         }
-        return false;
-    }
-
-    /** 主题开关：<span class="switch" data-key="...">。 */
-    private static boolean isSwitch(Element element) {
-        return hasClass(element, "switch");
-    }
-
-    /** 主题拖动条：<div class="slider" data-key="..." min max step>。 */
-    private static boolean isSlider(Element element) {
-        return hasClass(element, "slider") && !"INPUT".equalsIgnoreCase(element.tagName);
-    }
-
-    private static void setSwitchState(Element element, boolean on) {
-        element.setAttribute("class", on ? "switch on" : "switch");
-    }
-
-    private static void setSliderVisual(Element element, double value) {
-        double min = doubleAttribute(element, "min", 0.0D);
-        double max = doubleAttribute(element, "max", 100.0D);
-        double fraction = max > min ? (value - min) / (max - min) : 0.0D;
-        double percent = Math.round(Math.max(0.0D, Math.min(1.0D, fraction)) * 1000.0D) / 10.0D;
-        element.setAttribute("style", "--value:" + percent + "%;");
-    }
-
-    /** 按鼠标横向位置更新滑块并写回配置。 */
-    private static void applySliderAt(Element element, String key, double mouseX) {
-        double[] bounds = rect(element);
-        if (bounds == null || bounds[2] <= 1.0D) return;
-
-        double fraction = (mouseX - bounds[0]) / bounds[2];
-        fraction = Math.max(0.0D, Math.min(1.0D, fraction));
-
-        double min = doubleAttribute(element, "min", 0.0D);
-        double max = doubleAttribute(element, "max", 100.0D);
-        double step = doubleAttribute(element, "step", 0.0D);
-        double value = min + (max - min) * fraction;
-        if (step > 0.0D) value = Math.round(value / step) * step;
-        value = Math.max(min, Math.min(max, value));
-
-        setSliderVisual(element, value);
-        if (Math.abs(value - Baeffect.num(key)) > 1.0E-6D) {
-            Baeffect.applyPatch(Map.<String, Object>of(key, value));
-            pushedRevision = -1;
+        Element button = document.getElementById("fx-theme");
+        if (button != null) {
+            button.setTextContent(dark ? "浅色" : "深色");
         }
-    }
-
-    private static void endSliderDrag() {
-        draggedSlider = null;
-        draggedSliderKey = null;
-    }
-
-    /** 只做松开兜底判断；坐标一律用 DOM，避免两套坐标系打架。 */
-    private static void tickSliderRelease() {
-        if (draggedSlider == null) return;
-        long handle = Minecraft.getInstance().getWindow().getWindow();
-        if (handle == 0L) {
-            endSliderDrag();
-            return;
-        }
-        if (GLFW.glfwGetMouseButton(handle, GLFW.GLFW_MOUSE_BUTTON_LEFT) != GLFW.GLFW_PRESS) {
-            endSliderDrag();
-        }
-    }
-
-    /**
-     * 拖动期间用 AUI 的 DOM mousemove 继续更新。
-     * 与 mousedown 共用 clientX（文档坐标），避免和 tick 轮询的 GUI 坐标混用导致值被拉回去。
-     */
-    private static void bindSliderDrag(Document document) {
-        if (sliderDragBound) return;
-        sliderDragBound = true;
-
-        Element body = document.body;
-        if (body == null) return;
-
-        body.addEventListener("mousemove", event -> {
-            if (draggedSlider == null || draggedSliderKey == null) return;
-            if (!(event instanceof com.sighs.apricityui.event.MouseEvent mouse)) return;
-            applySliderAt(draggedSlider, draggedSliderKey, mouse.clientX);
-        });
-
-        body.addEventListener("mouseup", event -> endSliderDrag());
     }
 
     private static void show(Document document, String id, boolean visible, String display) {
@@ -755,7 +823,8 @@ public final class BAClickFxHtmlSettings {
         Element fill = document.getElementById("fx-progress-fill");
         if (fill != null) {
             fill.setAttribute("style", "display:block;width:"
-                    + Math.round(Math.max(0.0D, Math.min(1.0D, progress)) * 100.0D) + "%;height:100%;");
+                    + Math.round(Math.max(0.0D, Math.min(1.0D, progress)) * 100.0D) + "%;height:100%;"
+                    + "background-color:#4ca7ff;");
         }
         Element percent = document.getElementById("o-phiraProgress");
         if (percent != null) {
@@ -813,23 +882,20 @@ public final class BAClickFxHtmlSettings {
         Object raw = Baeffect.value(key);
         if (raw instanceof Number number) {
             double value = number.doubleValue();
-            String lower = key.toLowerCase(Locale.ROOT);
-            if (lower.contains("opacity") || lower.contains("alpha")) {
-                return Math.round(value * 100) + "%";
-            }
+            if (key.contains("opacity") || key.contains("Alpha")) return Math.round(value * 100) + "%";
             return round(value);
         }
         return raw == null ? "" : String.valueOf(raw);
     }
 
-    private static String round(double value) {
-        String text = String.format(Locale.ROOT, "%.3f", value);
-        int end = text.length();
-        if (text.indexOf('.') >= 0) {
-            while (end > 0 && text.charAt(end - 1) == '0') end--;
-            if (end > 0 && text.charAt(end - 1) == '.') end--;
-            text = text.substring(0, end);
+    private static String trimNumber(double value) {
+        if (Math.abs(value - Math.rint(value)) < 1.0E-6D) {
+            return String.valueOf((long) Math.rint(value));
         }
-        return text.isEmpty() ? "0" : text;
+        return String.format(Locale.ROOT, "%s", value);
+    }
+
+    private static String round(double value) {
+        return String.format(Locale.ROOT, "%.3f", value);
     }
 }

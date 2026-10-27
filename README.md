@@ -4,7 +4,7 @@
 
 ---
 ## 授权许可
-代码美术资源除非另有说明，默认遵循MIT<br>
+代码美术资源除非另有说明，默认遵循[LICENSE](LICENSE)<br>
 <b>
 - [phi_origin.zip](src/main/resources/assets/baeffect/default_pack/phi_origin.zip)（Phigros原版皮肤，归属Pigeon Games）
 - [ba-click-fx](https://github.com/CialloKing/ba-click-fx) Github项目<br>
