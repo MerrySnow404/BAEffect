@@ -46,7 +46,9 @@ public final class BAEffectCursorDispatcher {
         Minecraft minecraft = Minecraft.getInstance();
 
         if (!Baeffect.flag("cursorEnabled")) {
-            BAEffectCursorController.hide();
+            if (BAEffectCursorController.isShowing()) {
+                BAEffectCursorController.hide();
+            }
             return;
         }
 

@@ -35,15 +35,14 @@ public class BAEffectCursorController {
     }
 
     public static void hide() {
-        clearApricityPseudoCursor();
         List<Document> docs = Baeffect.documents(DOCUMENT_PATH);
         for (Document document : new ArrayList<>(docs)) {
             if (document != null) {
-                applyCursorStyle(document, CursorStyle.HIDDEN);
                 document.setReloadPersistent(false);
                 document.remove();
             }
         }
+        clearApricityPseudoCursor();
     }
 
     public static boolean isShowing() {
@@ -142,14 +141,33 @@ public class BAEffectCursorController {
     private static void clearApricityPseudoCursor() {
         try {
             Class<?> cursorClass = Class.forName("com.sighs.apricityui.style.Cursor");
-            Field pseudoCursorSpec = cursorClass.getDeclaredField("pseudoCursorSpec");
-            pseudoCursorSpec.setAccessible(true);
-            pseudoCursorSpec.set(null, null);
-
-            Field systemCursorHidden = cursorClass.getDeclaredField("systemCursorHidden");
-            systemCursorHidden.setAccessible(true);
-            systemCursorHidden.setBoolean(null, false);
+            setStatic(cursorClass, "pseudoCursorSpec", null);
+            setStatic(cursorClass, "systemCursorHidden", Boolean.FALSE);
+            setStatic(cursorClass, "currentCursorSpec", null);
+            setStatic(cursorClass, "lastAppliedCursorSpec", null);
         } catch (ReflectiveOperationException ignored) {
+        }
+        forceShowSystemCursor();
+    }
+
+    private static void setStatic(Class<?> type, String name, Object value) {
+        try {
+            Field field = type.getDeclaredField(name);
+            field.setAccessible(true);
+            field.set(null, value);
+        } catch (ReflectiveOperationException ignored) {
+            //pass
+        }
+    }
+
+    private static void forceShowSystemCursor() {
+        try {
+            net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
+            long window = minecraft.getWindow().getWindow();
+            org.lwjgl.glfw.GLFW.glfwSetInputMode(window,
+                    org.lwjgl.glfw.GLFW.GLFW_CURSOR, org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL);
+        } catch (Throwable ignored) {
+            //pass
         }
     }
 
