@@ -107,82 +107,11 @@ body::before {
 	display:flex;
 	align-items:center
 }
-.cbx-wrap {
-	position:relative;
-	display:inline-flex;
-	align-items:center
-}
-.cbx-wrap input[type="checkbox"] {
-	position:absolute;
-	opacity:0;
-	width:0;
-	height:0
-}
-.cbx-wrap .cbx-box {
-	position:relative;
-	width:24px;
-	height:24px;
-	border:1.5px solid #d4b8d0;
-	border-radius:6px;
-	background:rgba(255,255,255,0.65);
-	cursor:pointer;
-	transition:background 0.2s,border-color 0.2s;
-	display:inline-block;
-	flex-shrink:0
-}
-.cbx-wrap .cbx-box::after {
-	content:'';
-	position:absolute;
-	top:3px;
-	left:8px;
-	width:6px;
-	height:12px;
-	opacity:0;
-	transform:rotate(45deg) scale(0);
-	border-right:2px solid #fff;
-	border-bottom:2px solid #fff;
-	transition:all 0.3s ease;
-	transition-delay:0.12s
-}
-.cbx-wrap input[type="checkbox"]:checked + .cbx-box {
-	border-color:transparent;
-	background:#b87496;
-	animation:jelly 0.55s ease
-}
-.cbx-wrap input[type="checkbox"]:checked + .cbx-box::after {
-	opacity:1;
-	transform:rotate(45deg) scale(1)
-}
-.cbx-wrap input[type="checkbox"]:focus-visible + .cbx-box {
-	box-shadow:0 0 0 3px rgba(184,116,150,0.25)
-}
-@keyframes jelly {
-	0% {
-	transform:scale(1,1)
-    }
-    30% {
-        transform:scale(1.2,0.8)
-    }
-    40% {
-        transform:scale(0.8,1.2)
-    }
-    50% {
-        transform:scale(1.12,0.88)
-    }
-    65% {
-        transform:scale(0.95,1.05)
-    }
-    75% {
-        transform:scale(1.03,0.97)
-    }
-    100% {
-        transform:scale(1,1)
-    }
-}
 .check-switch {
-	font-size: 17px;
+	font-size: 13.6px;
 	position: relative;
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
 	width: 3.5em;
 	height: 2em;
 	cursor: pointer;

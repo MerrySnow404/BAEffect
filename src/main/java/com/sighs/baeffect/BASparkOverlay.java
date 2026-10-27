@@ -143,9 +143,134 @@ final class BAClickFxOverlay {
         if (canvas == null) return;
         updateLayout(document, canvas);
 
+        updateDebugHud(document);
         if (Minecraft.getInstance().screen == null && (hasEffects() || canvasDirty)) {
             renderFrame();
         }
+    }
+
+    private static final String DEBUG_HUD_ID = "baeffect-debug-hud";
+    private static int fpsFrames;
+    private static long fpsWindowStart = System.nanoTime();
+    private static int fpsValue;
+    private static String lastHudText = "";
+
+    static void countFrame() {
+        fpsFrames++;
+        long now = System.nanoTime();
+        long elapsed = now - fpsWindowStart;
+        if (elapsed >= 1_000_000_000L) {
+            fpsValue = (int) Math.round(fpsFrames * 1_000_000_000.0D / elapsed);
+            fpsFrames = 0;
+            fpsWindowStart = now;
+        }
+    }
+
+    //优先用游戏帧率 退回到自己的帧计数
+    private static int currentFps() {
+        Integer game = gameFps();
+        if (game != null && game > 0) return game;
+        return fpsValue;
+    }
+
+    private static java.lang.reflect.Method gameFpsMethod;
+    private static boolean gameFpsResolved;
+
+    private static Integer gameFps() {
+        try {
+            if (!gameFpsResolved) {
+                gameFpsResolved = true;
+                for (String name : new String[]{"getFps", "getFramerate"}) {
+                    try {
+                        gameFpsMethod = Minecraft.class.getDeclaredMethod(name);
+                        gameFpsMethod.setAccessible(true);
+                        break;
+                    } catch (Throwable ignored) {
+                        //pass
+                    }
+                }
+            }
+            if (gameFpsMethod == null) return null;
+            Object value = gameFpsMethod.invoke(Minecraft.getInstance());
+            return value instanceof Integer number ? number : null;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private static void updateDebugHud(Document document) {
+        if (document == null) return;
+        Element hud = document.getElementById(DEBUG_HUD_ID);
+        if (hud == null) return;
+
+        boolean showFps = Baeffect.flag("debugFps");
+        boolean showCpu = Baeffect.flag("debugCpu");
+        boolean showMemory = Baeffect.flag("debugMemory");
+        boolean showGpu = Baeffect.flag("debugGpu");
+        boolean any = showFps || showCpu || showMemory || showGpu;
+
+        if (!any) {
+            if (!lastHudText.isEmpty()) {
+                lastHudText = "";
+                hud.setAttribute("style", "display:none;");
+                hud.setTextContent("");
+            }
+            return;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        if (showFps) {
+            builder.append("FPS：").append(currentFps());
+        }
+        if (showCpu) {
+            if (builder.length() > 0) builder.append('\n');
+            builder.append("CPU：").append(percent(cpuLoad()));
+        }
+        if (showMemory) {
+            if (builder.length() > 0) builder.append('\n');
+            builder.append("内存：").append(percent(memoryLoad()));
+        }
+        if (showGpu) {
+            if (builder.length() > 0) builder.append('\n');
+            builder.append("显卡：").append("不可用");
+        }
+
+        String text = builder.toString();
+        if (text.equals(lastHudText)) return;
+        lastHudText = text;
+        hud.setAttribute("style", "display:block;position:absolute;left:8px;top:8px;"
+                + "padding:3px 5px;border-radius:4px;background:rgba(0,0,0,0.55);"
+                + "color:#7cf7ff;font-size:5px;line-height:1.4;white-space:pre;"
+                + "pointer-events:none;");
+        hud.setTextContent(text);
+    }
+
+    private static String percent(double ratio) {
+        if (ratio < 0.0D) return "不可用";
+        return Math.round(ratio * 100.0D) + "%";
+    }
+
+    private static double cpuLoad() {
+        try {
+            java.lang.management.OperatingSystemMXBean bean =
+                    java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+            if (bean instanceof com.sun.management.OperatingSystemMXBean sun) {
+                double load = sun.getCpuLoad();
+                if (load < 0.0D) load = sun.getSystemCpuLoad();
+                return load;
+            }
+        } catch (Throwable ignored) {
+            //pass
+        }
+        return -1.0D;
+    }
+
+    private static double memoryLoad() {
+        Runtime runtime = Runtime.getRuntime();
+        long max = runtime.maxMemory();
+        if (max <= 0L) return -1.0D;
+        long used = runtime.totalMemory() - runtime.freeMemory();
+        return Math.max(0.0D, Math.min(1.0D, (double) used / max));
     }
 
     private static boolean hasEffects() {
@@ -154,6 +279,7 @@ final class BAClickFxOverlay {
     }
 
     static void renderFrame() {
+        countFrame();
         if (Minecraft.getInstance().screen == null && !hasEffects() && !canvasDirty) return;
 
         try {
@@ -594,13 +720,6 @@ final class BAClickFxOverlay {
 
     private static long phiraLayerLogged;
 
-    /**
-     * 精细档拖尾光晕：用 DOM 的 box-shadow 做真实模糊。
-     *
-     * <p>画布的 stroke 只能叠宽度，做不出连续的高斯衰减；
-     * 而 box-shadow 的模糊半径是渲染器真正的高斯模糊，
-     * 用一串小方块覆盖轨迹就能得到连续光晕。</p>
-     */
     private static void syncTrailGlow(Document document) {
         if (document == null) return;
         Element layer = document.getElementById(TRAIL_GLOW_ID);
@@ -946,7 +1065,6 @@ final class BAClickFxOverlay {
         }
     }
 
-    /** 精细档主线：多层递减宽度叠加，边缘柔和而不是一根硬线。 */
     private static void drawTrailLineBlurred(CanvasRenderingContext2D context, double lifetime,
                                              double opacity, double width, String shape, double strength) {
         double[] spread = {1.0D, 0.72D, 0.5D, 0.34D};
@@ -959,12 +1077,6 @@ final class BAClickFxOverlay {
         }
     }
 
-    /**
-     * 画轨迹主线。
-     *
-     * <p>linear 直接连点；spline 用 Catmull-Rom 插值成连续曲线，
-     * 采样稀疏时也不会出现折角。</p>
-     */
     private static void drawTrailLine(CanvasRenderingContext2D context, double lifetime,
                                       double opacity, double width, String shape) {
         int last = TRAIL.size() - 1;

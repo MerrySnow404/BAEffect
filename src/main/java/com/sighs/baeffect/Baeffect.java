@@ -418,6 +418,12 @@ public final class Baeffect {
         defaults.put("bloom.diskAlpha", 0.65D);
         defaults.put("bloom.trailAlpha", 0.18D);
 
+        // 调试
+        defaults.put("debugFps", false);
+        defaults.put("debugCpu", false);
+        defaults.put("debugMemory", false);
+        defaults.put("debugGpu", false);
+
         return defaults;
     }
 

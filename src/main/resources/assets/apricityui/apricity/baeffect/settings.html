@@ -21,9 +21,9 @@
         <h3>指针</h3>
         <div class="row">
             <span class="lbl">替换鼠标指针样式</span>
-            <span class="cbx-wrap">
+            <span class="check-switch">
                 <input type="checkbox" class="chk" data-key="cursorEnabled" id="cursorEnabled">
-                <label class="cbx-box" for="cursorEnabled"></label>
+                <span class="check-knob"></span>
             </span>
         </div>
     </section>
@@ -49,9 +49,9 @@
         <div class="row"><span class="lbl">覆盖层 Alpha 上限</span><input type="range" class="sld" data-key="overlayAlphaLimit" min="0" max="1" step="0.01"><span class="val" data-out="overlayAlphaLimit"></span></div>
         <div class="row">
             <span class="lbl">原生辉光</span>
-            <span class="cbx-wrap">
+            <span class="check-switch">
                 <input type="checkbox" class="chk" data-key="bloom" id="bloom">
-                <label class="cbx-box" for="bloom"></label>
+                <span class="check-knob"></span>
             </span>
         </div>
         <div class="row"><span class="lbl">效果预设</span><select class="sel" data-key="preset"><option value="classic">贴近原版</option><option value="light-background">浅色背景优化</option><option value="soft">柔和</option><option value="performance">省电</option><option value="custom">自定义</option></select></div>
@@ -72,17 +72,17 @@
         <div class="row" id="phira-only-tip"><small>请注意，如果 Phira 资源包点击特效显示出现闪烁的白底，多点击几下就恢复正常啦~</small></div>
         <div class="row" id="phira-only-tint">
             <span class="lbl">贴图按主题色着色</span>
-            <span class="cbx-wrap">
+            <span class="check-switch">
                 <input type="checkbox" class="chk" data-key="phiraTint" id="phiraTint">
-                <label class="cbx-box" for="phiraTint"></label>
+                <span class="check-knob"></span>
             </span>
         </div>
         <div class="row" id="phira-only-scale"><span class="lbl">贴图放大倍率</span><input type="range" class="sld" data-key="phiraScale" min="1" max="5" step="0.1"><span class="val" data-out="phiraScale"></span></div>
         <div class="row" id="phira-only-sound">
             <span class="lbl">播放打击音效</span>
-            <span class="cbx-wrap">
+            <span class="check-switch">
                 <input type="checkbox" class="chk" data-key="phiraSound" id="phiraSound">
-                <label class="cbx-box" for="phiraSound"></label>
+                <span class="check-knob"></span>
             </span>
         </div>
         <div class="row" id="phira-only-progress">
@@ -121,9 +121,9 @@
         <div class="row" id="trail-glow-dpr"><span class="lbl">光晕分辨率</span><select class="sel" data-key="trailGlowDpr" data-kind="select"><option value="1">x1</option><option value="2">x2</option><option value="3">x3</option><option value="4">x4</option></select><span class="val" data-out="trailGlowDpr"></span></div>
         <div class="row">
             <span class="lbl">移动时始终显示</span>
-            <span class="cbx-wrap">
+            <span class="check-switch">
                 <input type="checkbox" class="chk" data-key="trailAlways" id="trailAlways">
-                <label class="cbx-box" for="trailAlways"></label>
+                <span class="check-knob"></span>
             </span>
         </div>
         <div class="row"><span class="lbl">动态效果偏好</span><select class="sel" data-key="motionMode"><option value="system">跟随系统</option><option value="full">完整动态</option><option value="reduced">减少持续动态</option></select></div>
@@ -134,18 +134,18 @@
         <h3>Hit / Flare</h3>
         <div class="row">
             <span class="lbl">启用 Hit</span>
-            <span class="cbx-wrap">
+            <span class="check-switch">
                 <input type="checkbox" class="chk" data-key="hit.enabled" id="hitEnabled">
-                <label class="cbx-box" for="hitEnabled"></label>
+                <span class="check-knob"></span>
             </span>
         </div>
         <div class="row"><span class="lbl">Hit 寿命</span><input type="range" class="sld" data-key="hit.lifetimeMs" min="20" max="200" step="1"><span class="val" data-out="hit.lifetimeMs"></span></div>
         <div class="row"><span class="lbl">Hit 半径</span><input type="range" class="sld" data-key="hit.radius" min="10" max="60" step="0.1"><span class="val" data-out="hit.radius"></span></div>
         <div class="row">
             <span class="lbl">启用 Flare</span>
-            <span class="cbx-wrap">
+            <span class="check-switch">
                 <input type="checkbox" class="chk" data-key="flare.enabled" id="flareEnabled">
-                <label class="cbx-box" for="flareEnabled"></label>
+                <span class="check-knob"></span>
             </span>
         </div>
         <div class="row"><span class="lbl">Flare 寿命</span><input type="range" class="sld" data-key="flare.lifetimeMs" min="50" max="300" step="1"><span class="val" data-out="flare.lifetimeMs"></span></div>
@@ -217,6 +217,38 @@
         <div class="row"><span class="lbl">原生光盘模糊</span><input type="range" class="sld" data-key="bloom.diskBlur" min="0" max="200" step="1"><span class="val" data-out="bloom.diskBlur"></span></div>
         <div class="row"><span class="lbl">原生光盘辉光透明度</span><input type="range" class="sld" data-key="bloom.diskAlpha" min="0" max="1" step="0.01"><span class="val" data-out="bloom.diskAlpha"></span></div>
         <div class="row"><span class="lbl">原生轨迹辉光透明度</span><input type="range" class="sld" data-key="bloom.trailAlpha" min="0" max="1" step="0.01"><span class="val" data-out="bloom.trailAlpha"></span></div>
+    </section>
+
+    <section class="card" id="card-debug">
+        <h3>调试</h3>
+        <div class="row">
+            <span class="lbl">显示 FPS</span>
+            <span class="check-switch">
+                <input type="checkbox" class="chk" data-key="debugFps" id="debugFps">
+                <span class="check-knob"></span>
+            </span>
+        </div>
+        <div class="row">
+            <span class="lbl">显示 CPU 占用率</span>
+            <span class="check-switch">
+                <input type="checkbox" class="chk" data-key="debugCpu" id="debugCpu">
+                <span class="check-knob"></span>
+            </span>
+        </div>
+        <div class="row">
+            <span class="lbl">显示内存占用率</span>
+            <span class="check-switch">
+                <input type="checkbox" class="chk" data-key="debugMemory" id="debugMemory">
+                <span class="check-knob"></span>
+            </span>
+        </div>
+        <div class="row">
+            <span class="lbl">显示显卡占用率</span>
+            <span class="check-switch">
+                <input type="checkbox" class="chk" data-key="debugGpu" id="debugGpu">
+                <span class="check-knob"></span>
+            </span>
+        </div>
     </section>
 </main>
 

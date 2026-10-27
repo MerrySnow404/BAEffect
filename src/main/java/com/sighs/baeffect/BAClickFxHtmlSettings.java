@@ -25,9 +25,9 @@ public final class BAClickFxHtmlSettings {
     };
 
     private static Screen hostScreen;
-    /** 打开设置前所在的界面，关闭设置后回到这里 */
     private static Screen returnScreen;
     private static int pushedRevision = -1;
+    private static int skipPullTicks;
     private static boolean loggedElements;
     private static String colorPickerOpeningKey = null;
     private static String lastPhiraSignature = null;
@@ -174,7 +174,12 @@ public final class BAClickFxHtmlSettings {
             push(document, controls);
             applyTheme(document);
         }
-        pullControlState(controls);
+        // push 之后 AUI 要等一次布局才把新值写进控件
+        if (skipPullTicks > 0) {
+            skipPullTicks--;
+        } else {
+            pullControlState(controls);
+        }
         updatePhiraStatus(document);
 
         Element root = document.getElementById("fx-root");
@@ -604,6 +609,9 @@ public final class BAClickFxHtmlSettings {
     }
 
     private static void push(Document document, List<Element> controls) {
+        // AUI 的 setValue/setChecked 只是标脏，真正生效要等下一次布局
+        // 这段窗口内读控件会拿到旧值，必须先停两 tick 再读
+        skipPullTicks = 2;
         for (Element element : controls) {
             String key = element.getAttribute("data-key");
             if (key == null || key.isEmpty()) continue;

@@ -36,11 +36,26 @@
             overflow: visible;
             pointer-events: none;
         }
+        #baeffect-debug-hud {
+            position: absolute;
+            left: 8px;
+            top: 8px;
+            display: none;
+            padding: 3px 5px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.55);
+            color: #7cf7ff;
+            font-size: 5px;
+            line-height: 1.4;
+            white-space: pre;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body style="transform: translateZ(9999px);">
 <canvas id="baeffect-fx-canvas"></canvas>
 <div id="baeffect-phira-layer"></div>
 <div id="baeffect-trail-glow"></div>
+<div id="baeffect-debug-hud"></div>
 </body>
 </html>
