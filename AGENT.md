@@ -55,8 +55,6 @@ cd targets\forge-1.20.1
 
 | Target | Gradle JVM |
 | --- | --- |
-| `forge-1.18.2` | JDK 17 |
-| `forge-1.19.2` | JDK 17 |
 | `forge-1.20.1` | JDK 17 |
 | `fabric-1.20.1` | JDK 17 |
 | `fabric-1.21.1` | JDK 21 |

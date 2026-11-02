@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 /**
  * OGG/Vorbis decoder used for Phira resource-pack sounds.
  *
- * <p>This implementation targets Minecraft 1.18.2 through 1.21.1. Minecraft
+ * <p>This implementation targets Minecraft 1.20.1 through 1.21.1. Minecraft
  * 26.1 replaced {@code OggAudioStream} with {@code JOrbisAudioStream}; those
  * targets exclude this file and provide their own implementation.</p>
  */

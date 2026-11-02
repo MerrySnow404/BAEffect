@@ -8,18 +8,21 @@ common 文件。
 
 | Target | JDK | AUI |
 | --- | --- | --- |
-| `forge-1.18.2` | 17 | `ApricityUI-forge-1.18.2:1.2.9` |
-| `forge-1.19.2` | 17 | `ApricityUI-forge-1.19.2:1.2.9` |
-| `forge-1.20.1` | 17 | `ApricityUI-forge-1.20.1:1.2.9.1` |
+| `forge-1.20.1` | 17 | `ApricityUI-forge-1.20.1:1.2.9` |
 | `fabric-1.20.1` | 17 | `ApricityUI-fabric-1.20.1:1.2.9` |
 | `fabric-1.21.1` | 21 | `ApricityUI-fabric-1.21.1:1.2.9` |
 | `fabric-26.1` | 25 | `ApricityUI-fabric-26.1:1.2.9` |
-| `neoforge-1.21.1` | 21 | `ApricityUI-neoforge-1.21.1:1.2.9.4` |
+| `neoforge-1.21.1` | 21 | `ApricityUI-neoforge-1.21.1:1.2.9` |
 | `neoforge-26.1` | 25 | `ApricityUI-neoforge-26.1:1.2.9` |
 
-ApricityUI 1.2.9 在以上 8 个 target 中的公开 API（`Document`、`Element`、
+ApricityUI 1.2.9 在以上 6 个 target 中的公开 API（`Document`、`Element`、
 `Canvas`、`Client`、`HTML`、`Window`、`ColorPicker`、`ApricityScreen`）经
 `javap` 比对一致，因此所有 AUI 页面、画布绘制与设置页逻辑都放在 `common/`。
+
+各 target 的 `repositories` 首先查找 `mavenLocal()`，随后是 Sighs Maven；
+1.2.9 已存在于 Gradle 缓存或 Sighs Maven，本地构建也可先用 `mavenLocal` 覆盖。
+发布元数据把 AUI 依赖限制在 `[1.2.7,1.2.9]`（Fabric 写作
+`>=1.2.7 <=1.2.9`）。
 
 ## 加载器差异
 
@@ -33,18 +36,12 @@ ApricityUI 1.2.9 在以上 8 个 target 中的公开 API（`Document`、`Element
 | 元数据 | target 资源 | `mods.toml` / `neoforge.mods.toml` / `fabric.mod.json`。 |
 | 配置/游戏目录 | `BaeffectPlatform` 实现 | Forge/NeoForge `FMLPaths`；Fabric `FabricLoader`。 |
 
-Forge 1.18.2 的屏幕事件名与后续版本不同：使用
-`ScreenEvent.DrawScreenEvent.Pre/Post` 与
-`ScreenEvent.MouseClickedEvent.Pre`；1.19.2+ 使用
-`ScreenEvent.Render.Pre/Post` 与 `ScreenEvent.MouseButtonPressed.Pre`。
-
 ## Minecraft API 差异
 
 ### 屏幕绘制
 
 | 版本 | API |
 | --- | --- |
-| 1.18.2 / 1.19.2 | `Screen#render(PoseStack, int, int, float)`；`GuiComponent#fill/blit` |
 | 1.20.1 / 1.21.1 | `Screen#render(GuiGraphics, int, int, float)`；`GuiGraphics#fill/blit/renderTooltip` |
 | 26.1 | `Screen#extractRenderState(GuiGraphicsExtractor, int, int, float)`；`GuiGraphicsExtractor#fill/blit/setTooltipForNextFrame` |
 
@@ -56,7 +53,7 @@ Forge 1.18.2 的屏幕事件名与后续版本不同：使用
 
 | 版本 | 类 |
 | --- | --- |
-| 1.18.2 – 1.20.1 | `net.minecraft.client.gui.screens.MouseSettingsScreen` |
+| 1.20.1 | `net.minecraft.client.gui.screens.MouseSettingsScreen` |
 | 1.21.1 / 26.1 | `net.minecraft.client.gui.screens.options.MouseSettingsScreen` |
 
 该判断通过 `BaeffectPlatform#isSettingsScreen(Screen)` 下放到 target。
@@ -65,7 +62,7 @@ Forge 1.18.2 的屏幕事件名与后续版本不同：使用
 
 | 版本 | 方法 |
 | --- | --- |
-| 1.18.2 – 1.21.1 | `Window#getWindow()` |
+| 1.20.1 – 1.21.1 | `Window#getWindow()` |
 | 26.1 | `Window#handle()` |
 
 通过 `BaeffectPlatform#windowHandle()` 下放。
@@ -74,7 +71,7 @@ Forge 1.18.2 的屏幕事件名与后续版本不同：使用
 
 | 版本 | 解码器 |
 | --- | --- |
-| 1.18.2 – 1.20.1 | `com.mojang.blaze3d.audio.OggAudioStream` |
+| 1.20.1 | `com.mojang.blaze3d.audio.OggAudioStream` |
 | 1.21.1 / 26.1 | `net.minecraft.client.sounds.JOrbisAudioStream`（float 采样） |
 
 `common/OggDecoder.java` 实现旧版解码；`fabric-1.21.1`、`fabric-26.1`、
@@ -85,16 +82,10 @@ Forge 1.18.2 的屏幕事件名与后续版本不同：使用
 
 | 版本 | 类型 |
 | --- | --- |
-| 1.18.2 – 1.21.1 | `net.minecraft.resources.ResourceLocation` |
+| 1.20.1 – 1.21.1 | `net.minecraft.resources.ResourceLocation` |
 | 26.1 | `net.minecraft.resources.Identifier` |
 
 只影响 target 中的图标 `ResourceLocation`/`Identifier` 构造。
-
-### 文本组件
-
-1.18.2 没有 `Component#literal(String)`，因此 common 使用
-`Component#nullToEmpty(String)` 构造提示文本；该工厂方法在 1.18.2 – 26.1
-全部存在。
 
 ## Fabric Mixin 差异
 
@@ -125,8 +116,6 @@ com.sighs.apricityui.network.fabricutil.FabricAnnotationScanner Unable to get pu
 
 ```text
 common:                 gradlew -p common build
-forge-1.18.2:           targets/forge-1.18.2/gradlew build
-forge-1.19.2:           targets/forge-1.19.2/gradlew build
 forge-1.20.1:           targets/forge-1.20.1/gradlew build
 fabric-1.20.1:          targets/fabric-1.20.1/gradlew build
 fabric-1.21.1:          targets/fabric-1.21.1/gradlew build   (Gradle JVM 21)

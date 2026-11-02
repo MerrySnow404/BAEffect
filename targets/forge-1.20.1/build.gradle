@@ -93,6 +93,7 @@ legacyForge {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven {
         name = "Sighs"

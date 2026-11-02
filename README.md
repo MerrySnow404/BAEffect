@@ -32,8 +32,6 @@ Minecraft 加载器和版本：
 
 | Target | Gradle JVM | 构建 |
 | --- | --- | --- |
-| `forge-1.18.2` | 17 | `targets/forge-1.18.2/gradlew build` |
-| `forge-1.19.2` | 17 | `targets/forge-1.19.2/gradlew build` |
 | `forge-1.20.1` | 17 | `targets/forge-1.20.1/gradlew build` |
 | `fabric-1.20.1` | 17 | `targets/fabric-1.20.1/gradlew build` |
 | `fabric-1.21.1` | 21 | `targets/fabric-1.21.1/gradlew build` |

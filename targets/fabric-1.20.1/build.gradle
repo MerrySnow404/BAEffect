@@ -66,6 +66,7 @@ tasks.named('compileJava').configure { dependsOn 'prepareCommonSources' }
 tasks.named('sourcesJar', Jar).configure { dependsOn 'prepareCommonSources' }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven {
         name = "Sighs"
