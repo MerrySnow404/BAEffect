@@ -1,0 +1,180 @@
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'java-library'
+    id 'maven-publish'
+    id 'jacoco'
+    id 'net.neoforged.moddev.legacyforge' version '2.0.91'
+    id 'me.modmuss50.mod-publish-plugin' version '2.1.1'
+}
+
+def properties = new Properties()
+file('../../gradle.properties').withInputStream { properties.load(it) }
+file('gradle.properties').withInputStream { properties.load(it) }
+properties.each { key, value -> ext.set(key.toString(), value.toString()) }
+
+group = mod_group_id
+version = mod_version
+
+base {
+    archivesName = "${mod_name}-forge-1.20.1"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    withSourcesJar()
+}
+
+// common/ is a shared source tree that also compiles standalone
+// (`gradlew -p common build`). Everything without a confirmed version
+// difference lives there, so its sources are compiled into this target by
+// source-set sharing.
+sourceSets {
+    main {
+        java.srcDir "$buildDir/generated/common-main"
+    }
+    test {
+        java.srcDir '../../common/src/test/java'
+        resources.srcDir '../../common/src/test/resources'
+    }
+}
+
+tasks.register('prepareCommonSources', Sync) {
+    from('../../common/src/main/java') {
+        // This target's version differences are registered here: exclude one
+        // path per common file that this target replaces with its own
+        // implementation.
+    }
+    into "$buildDir/generated/common-main"
+}
+tasks.named('compileJava').configure { dependsOn 'prepareCommonSources' }
+tasks.named('sourcesJar', Jar).configure { dependsOn 'prepareCommonSources' }
+
+legacyForge {
+    version = "${forge_minecraft_version}-${forge_version}"
+
+    runs {
+        client {
+            client()
+            gameDirectory = file('run')
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        data {
+            data()
+            programArguments.addAll '--mod', project.mod_id, '--all',
+                    '--output', file('src/generated/resources/').getAbsolutePath(),
+                    '--existing', file('src/main/resources/').getAbsolutePath(),
+                    '--existing', file('../../common/src/main/resources/').getAbsolutePath()
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "Sighs"
+        url = "https://maven.sighs.cc/repository/maven-public/"
+    }
+    maven {
+        name = "MinecraftForge"
+        url = "https://maven.minecraftforge.net/"
+        content {
+            includeGroup "net.minecraftforge"
+        }
+    }
+}
+
+dependencies {
+    // ApricityUI is published in SRG names; modImplementation is this build's
+    // equivalent of ForgeGradle's fg.deobf and remaps it to official names.
+    modImplementation "com.sighs:ApricityUI-forge-${forge_minecraft_version}:${apricityui_version}"
+
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'com.google.code.gson:gson:2.10.1'
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    def replaceProperties = [
+            minecraft_version      : forge_minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            forge_version          : forge_version,
+            forge_version_range    : forge_version_range,
+            loader_version_range   : forge_loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description
+    ]
+
+    inputs.properties replaceProperties
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes(["Specification-Title"     : mod_id,
+                    "Specification-Vendor"    : mod_authors,
+                    "Specification-Version"   : "1",
+                    "Implementation-Title"    : project.name,
+                    "Implementation-Version"  : project.jar.archiveVersion,
+                    "Implementation-Vendor"   : mod_authors,
+                    "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")])
+    }
+
+    finalizedBy 'reobfJar'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
+}
+
+jacoco {
+    toolVersion = '0.8.12'
+}
+
+tasks.named('test', Test).configure {
+    finalizedBy tasks.named('jacocoTestReport')
+}
+
+tasks.named('jacocoTestReport', JacocoReport).configure {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+}
+
+apply from: file('../../gradle/target-conventions/publish.gradle')

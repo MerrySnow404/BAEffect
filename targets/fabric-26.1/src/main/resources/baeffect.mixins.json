@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.sighs.baeffect.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "ScreenMixin",
+    "ApricityScreenMixin",
+    "MouseHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

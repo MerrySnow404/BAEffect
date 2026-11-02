@@ -6,53 +6,55 @@
 ## 授权许可
 代码美术资源除非另有说明，默认遵循[LICENSE](LICENSE)<br>
 <b>
-- [phi_origin.zip](src/main/resources/assets/baeffect/default_pack/phi_origin.zip)（Phigros原版皮肤，归属Pigeon Games）
+- [phi_origin.zip](common/src/main/resources/assets/baeffect/default_pack/phi_origin.zip)（Phigros原版皮肤，归属Pigeon Games）
 - [ba-click-fx](https://github.com/CialloKing/ba-click-fx) Github项目<br>
 保留其作者原许可，保留其作者原协议，如有侵权请联系删除。</b>
 ---
 
-面向模组开发者的源码安装信息
--------------------------------------------
-本代码遵循 Minecraft Forge 的安装方法。它会对原版 MCP 源代码应用
-一些小型补丁，使你和他人都能访问
-构建一个成功模组所需的部分数据和函数。
+## 项目结构
 
-另请注意，这些补丁是针对“未重命名”的 MCP 源代码（即
-SRG 名称）构建的——这意味着你将无法直接对照
-普通代码来阅读它们。
+本项目使用 `common + targets/<loader>-<minecraft-version>` 结构维护多个
+Minecraft 加载器和版本：
 
-安装流程
-==============================
+- `common/`：所有没有确证版本差异的共享源码与资源。可以引用 Minecraft 和
+  加载器类型；AUI 页面、画布特效、Phira 资源包解析与配置逻辑都在这里。
+- `targets/`：每个加载器与 Minecraft 版本一个独立工程，只放入口、事件、
+  Mixin、metadata 和已确证不同的 API 实现。
+- `docs/version-differences/baeffect.md`：经源码/字节码确认的版本差异登记。
 
-第 1 步：打开命令行并浏览到你解压 zip 文件的文件夹。
+`common` 也能单独编译：
 
-第 2 步：你需要做一个选择。
-如果你更倾向于使用 Eclipse：
-1. 运行以下命令：`./gradlew genEclipseRuns`
-2. 打开 Eclipse，Import > Existing Gradle Project > 选择文件夹
-   或运行 `gradlew eclipse` 来生成项目。
+```bash
+./gradlew -p common build
+```
 
-如果你更倾向于使用 IntelliJ：
-1. 打开 IDEA，并导入项目。
-2. 选择你的 build.gradle 文件并让其导入。
-3. 运行以下命令：`./gradlew genIntellijRuns`
-4. 如有需要，在 IDEA 中刷新 Gradle 项目。
+## Target 与构建
 
-如果你在任何时候发现 IDE 中缺少库，或者遇到了问题，你可以
-运行 `gradlew --refresh-dependencies` 来刷新本地缓存。运行 `gradlew clean` 来重置一切
-（这不会影响你的代码），然后重新开始该流程。
+| Target | Gradle JVM | 构建 |
+| --- | --- | --- |
+| `forge-1.18.2` | 17 | `targets/forge-1.18.2/gradlew build` |
+| `forge-1.19.2` | 17 | `targets/forge-1.19.2/gradlew build` |
+| `forge-1.20.1` | 17 | `targets/forge-1.20.1/gradlew build` |
+| `fabric-1.20.1` | 17 | `targets/fabric-1.20.1/gradlew build` |
+| `fabric-1.21.1` | 21 | `targets/fabric-1.21.1/gradlew build` |
+| `fabric-26.1` | 25 | `targets/fabric-26.1/gradlew build` |
+| `neoforge-1.21.1` | 21 | `targets/neoforge-1.21.1/gradlew build` |
+| `neoforge-26.1` | 25 | `targets/neoforge-26.1/gradlew build` |
 
-映射名称
-=============================
-默认情况下，MDK 配置为使用 Mojang 官方映射名称来表示 Minecraft 代码库中的
-方法和字段。这些名称受特定许可证保护。所有模组开发者都应了解此
-许可证，如果你不同意它，你可以在
-build.gradle 中将映射名称更改为其他众包名称。有关最新许可证文本，请参阅映射文件本身，或此处的参考副本：
-https://github.com/MinecraftForge/MCPConfig/blob/master/Mojang.md
+在 IDEA 中直接打开任意 `targets/<loader>-<version>/` 目录即可；`common/`
+会作为 composite build 一起导入。
 
-附加资源：
-=========================
-社区文档：https://docs.minecraftforge.net/en/1.20.1/gettingstarted/
-LexManos 的安装视频：https://youtu.be/8VEdtQLuLO0
-Forge 论坛：https://forums.minecraftforge.net/
-Forge Discord：https://discord.minecraftforge.net/
+## 依赖
+
+所有 target 使用 [ApricityUI](https://github.com/Tower-of-Sighs/ApricityUI)
+作为 HTML/Canvas 渲染层。AUI 版本按 target 记录在各自的
+`gradle.properties` 中；升级时请同步更新
+`docs/version-differences/baeffect.md` 的支持矩阵。
+
+## 已知上游问题
+
+ApricityUI 1.2.6 – 1.3.0 的 Fabric 产物在
+`META-INF/services/com.sighs.apricityui.util.spi.IAnnotationScanner` 中注册了
+`FabricAnnotationScanner`，但该类只有私有构造器，`ServiceLoader` 在客户端启动时
+会抛出 `ServiceConfigurationError`。该问题位于 AUI 本体，BAEffect 的 Fabric
+target 可以正常编译，但运行时需要等待 AUI 修复后再验证。

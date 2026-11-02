@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.sighs.baeffect.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "baeffect.refmap.json",
+  "client": [
+    "ScreenMixin",
+    "ApricityScreenMixin",
+    "MouseHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
