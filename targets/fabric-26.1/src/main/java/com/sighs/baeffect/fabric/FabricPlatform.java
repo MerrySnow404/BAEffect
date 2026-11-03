@@ -20,6 +20,12 @@ public final class FabricPlatform implements BaeffectPlatform {
     }
 
     @Override
+    public String apricityUiVersion() {
+        return FabricLoader.getInstance().getModContainer("apricityui")
+                .orElseThrow().getMetadata().getVersion().getFriendlyString();
+    }
+
+    @Override
     public long windowHandle() {
         return Minecraft.getInstance().getWindow().handle();
     }

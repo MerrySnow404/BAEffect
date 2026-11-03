@@ -13,6 +13,8 @@ public interface BaeffectPlatform {
 
     Path gameDir();
 
+    String apricityUiVersion();
+
     /** The GLFW window handle. */
     long windowHandle();
 

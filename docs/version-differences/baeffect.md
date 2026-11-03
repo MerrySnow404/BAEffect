@@ -21,8 +21,16 @@ ApricityUI 1.2.9 在以上 6 个 target 中的公开 API（`Document`、`Element
 
 各 target 的 `repositories` 首先查找 `mavenLocal()`，随后是 Sighs Maven；
 1.2.9 已存在于 Gradle 缓存或 Sighs Maven，本地构建也可先用 `mavenLocal` 覆盖。
-发布元数据把 AUI 依赖限制在 `[1.2.7,1.2.9]`（Fabric 写作
-`>=1.2.7 <=1.2.9`）。
+编译仍使用 1.2.9 API，发布元数据允许 AUI `[1.2.7,1.3.0]`（Fabric 写作
+`>=1.2.7 <=1.3.0`）。
+
+### Canvas 坐标兼容
+
+AUI 1.3.0 改为按 CSS 内容尺寸和设备像素比例自动管理 Canvas 位图；旧版则需要
+BAEffect 自行放大位图和绘图变换。各加载器通过 `BaeffectPlatform#apricityUiVersion()`
+提供实际加载的 AUI 版本，`Baeffect` 在初始化时判断是否为 1.3.0 及以上；
+`BASparkOverlay` 对新版使用逻辑宽高和单位变换，对旧版保留手动 DPR 缩放。
+`maxDpr` 仅控制旧版手动缩放，新版的位图分辨率由 AUI 管理。
 
 ## 加载器差异
 

@@ -16,7 +16,7 @@ gradle/target-conventions/      所有 target 共用的构建约定
 - 版本差异的登记点是各 target `prepareCommonSources` 里的 `exclude` 块：某个 common 文件在该 target 上有确证差异时，在那里 `exclude '<路径>'`，并把该 target 自己的实现放进 target。
 - 唯一能把代码从 `common` 拆到 `targets/<loader>-<mc-version>/` 的理由是：经阅读实际源码/API 确证该内容在不同 loader 或不同 Minecraft 版本之间存在差异。不得凭猜测拆分，也不得为了“代码好看”而拆分。
 - `common` 现在不是独立的 Gradle 子项目，而是共享源码树：`common/build.gradle` 用 `java-library` + `net.neoforged.moddev.legacyforge 2.0.91`、toolchain 17，对着与 `targets/forge-1.20.1` 相同的 Forge 1.20.1 类路径独立编译与测试（`gradlew -p common build` / `gradlew -p common test`）。
-- 不要用运行时版本判断、反射或同名 class 覆盖来兼容不同 target；不同 API 应由各 target 的适配器实现。
+- 不要用运行时版本判断、反射或同名 class 覆盖来兼容不同 target；不同 API 应由各 target 的适配器实现。AUI Canvas 的依赖版本兼容例外：各 target 的适配器提供实际 AUI 版本，共享逻辑按 1.3.0 边界选择自动或手动缩放，保持同一产物兼容新旧 AUI。
 - 一个发布 jar 只对应一个 loader 与一个 Minecraft 版本，禁止 universal jar。
 
 ## 文件与配置约定

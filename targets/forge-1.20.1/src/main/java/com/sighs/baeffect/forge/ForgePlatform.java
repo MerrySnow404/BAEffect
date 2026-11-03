@@ -20,6 +20,12 @@ public final class ForgePlatform implements BaeffectPlatform {
     }
 
     @Override
+    public String apricityUiVersion() {
+        return net.minecraftforge.fml.ModList.get().getModContainerById("apricityui")
+                .orElseThrow().getModInfo().getVersion().toString();
+    }
+
+    @Override
     public long windowHandle() {
         return Minecraft.getInstance().getWindow().getWindow();
     }

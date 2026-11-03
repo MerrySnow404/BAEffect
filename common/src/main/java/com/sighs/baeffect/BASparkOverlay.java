@@ -435,7 +435,8 @@ final class BAClickFxOverlay {
         int logicalHeight = Math.max(1, (int) Math.round(viewportSize.height()));
 
         double guiScale = Math.max(0.5D, Minecraft.getInstance().getWindow().getGuiScale());
-        double renderScale = Math.max(0.5D, Math.min(guiScale, Math.max(1.0D, Baeffect.num("maxDpr"))));
+        double renderScale = Baeffect.usesLogicalCanvas() ? 1.0D
+                : Math.max(0.5D, Math.min(guiScale, Math.max(1.0D, Baeffect.num("maxDpr"))));
 
         if (canvas == layoutCanvas
                 && logicalWidth == layoutWidth

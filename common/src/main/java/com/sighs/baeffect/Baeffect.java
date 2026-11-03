@@ -23,6 +23,7 @@ public final class Baeffect {
     public static final Logger LOGGER = LoggerFactory.getLogger(MODID);
 
     private static BaeffectPlatform platform;
+    private static boolean logicalCanvas;
 
     private static final String CONFIG_FILE = "baeffect.toml";
     private static final Gson GSON = new Gson();
@@ -42,7 +43,21 @@ public final class Baeffect {
 
     public static void init(BaeffectPlatform platform) {
         Baeffect.platform = platform;
+        String auiVersion = platform.apricityUiVersion();
+        var version = java.util.regex.Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)(?:[-+].*)?$")
+                .matcher(auiVersion);
+        if (!version.matches()) {
+            throw new IllegalStateException("Unrecognized ApricityUI version: " + auiVersion);
+        }
+        int major = Integer.parseInt(version.group(1));
+        int minor = Integer.parseInt(version.group(2));
+        logicalCanvas = major > 1 || (major == 1 && minor >= 3);
+        LOGGER.info("ApricityUI {}: {} canvas scaling", auiVersion, logicalCanvas ? "automatic" : "manual");
         load();
+    }
+
+    static boolean usesLogicalCanvas() {
+        return logicalCanvas;
     }
 
     public static BaeffectPlatform platform() {
